@@ -516,6 +516,7 @@ function renderMeds(b){
       ${m.note?`<div class="mnote">${esc(m.note)}</div>`:''}
       <div class="acts">
         <button class="btn ghost sm" onclick="openMedModal('${m.id}')">編集</button>
+        ${m.fileUrl?`<a class="btn ghostp sm" href="${esc(m.fileUrl)}" target="_blank" rel="noopener" style="text-decoration:none">📎 PDFを開く</a>`:''}
         ${(m.stock!=null&&m.stock!=='')?`<button class="btn ghost sm" onclick="refill('${m.id}')">補充</button>`:''}
         <button class="btn ghost sm" onclick="toggleMed('${m.id}')">${m.active===false?'再開':'休薬'}</button>
         <button class="btn danger sm" onclick="delMed('${m.id}')">削除</button>
@@ -937,6 +938,9 @@ function openMedModal(id){
       <div class="field"><label>補充アラート(以下で警告)</label><input id="f_malert" type="number" value="${esc(m?.stockAlert!=null?String(m.stockAlert):'7')}" placeholder="7"></div></div>
     <div class="field"><label>目的・何のための薬か</label><input id="f_mpurpose" value="${esc(m?.purpose||'')}" placeholder="例：血圧を下げる"></div>
     <div class="field"><label>備考・注意</label><textarea id="f_mnote" placeholder="例：朝食後に。グレープフルーツ禁止。">${esc(m?.note||'')}</textarea></div>
+    <div class="field"><label>📎 処方箋・お薬手帳のPDFリンク（任意）</label>
+      <input id="f_mfile" value="${esc(m?.fileUrl||'')}" placeholder="例：https://drive.google.com/file/d/xxxxx/view">
+      <div class="muted" style="font-size:12px;margin-top:4px">スマホでPDF化→Googleドライブ等にアップ→「リンクを取得」したURLを貼ってください</div></div>
     <div class="foot"><button class="btn subtle block" onclick="closeModal()">キャンセル</button>
       <button class="btn block" onclick="saveMed('${id||''}')">保存</button></div>`);
   setTimeout(()=>document.getElementById('f_mname').focus(),50);
@@ -955,8 +959,10 @@ function lookupForMed(){ const q=val('f_mname'); const d=findDrug(q); const box=
 function applyDrug(n){ const d=findDrug(n); if(!d)return; const pe=document.getElementById('f_mpurpose'); if(pe&&!pe.value)pe.value=d.e;
   const ne=document.getElementById('f_mnote'); if(ne){ const add=`【副作用】${d.s}\n【注意】${d.w}`; ne.value=ne.value?ne.value+'\n'+add:add; } }
 function saveMed(id){ const name=val('f_mname'); if(!name){alert('薬の名前を入力してください');return;} const p=cur(); const sr=val('f_mstock');
+  const fileUrl=val('f_mfile');
+  if(fileUrl&&!/^https?:\/\//.test(fileUrl)){alert('リンクは https:// で始まる正しいURLを入れてください');return;}
   const data={name,dose:val('f_mdose'),timing:[...medTiming],purpose:val('f_mpurpose'),note:val('f_mnote'),start:val('f_mstart'),end:val('f_mend'),
-    stock:sr===''?null:parseInt(sr,10),stockAlert:val('f_malert')===''?7:parseInt(val('f_malert'),10)};
+    stock:sr===''?null:parseInt(sr,10),stockAlert:val('f_malert')===''?7:parseInt(val('f_malert'),10),fileUrl};
   if(id)Object.assign(p.medications.find(x=>x.id===id),data); else p.medications.push({id:uid(),active:true,...data});
   save(); closeModal(); render(); }
 

@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ナースのドラッグ手帳</title>
+<style>
+  :root{
+    --cream:#fbf6f0; --card:#ffffff;
+    --mint:#7ccdb3; --mint-d:#43b393; --mint-soft:#e6f5ef;
+    --pink:#f2a3b8; --pink-d:#e87d99; --pink-soft:#fce7ed;
+    --ink:#41514e; --sub:#92a09c; --line:#ede7df;
+    --amber:#e6a25a; --amber-soft:#fdf2e1;
+    --blue:#7fb2e8; --blue-soft:#e7f0fc;
+    --radius:22px; --radius-sm:14px;
+    --shadow:0 2px 8px rgba(120,140,135,.10),0 8px 24px rgba(120,140,135,.08);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{font-family:"Hiragino Maru Gothic ProN","ヒラギノ丸ゴ ProN W4","Yu Gothic","Segoe UI",-apple-system,sans-serif;
+    background:#cdbfa8;color:var(--ink);font-size:15px;line-height:1.65}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:inherit;color:inherit}
+  input,select,textarea{font-family:inherit;font-size:15px;width:100%;padding:11px 13px;
+    border:1.5px solid var(--line);border-radius:13px;background:#fff;color:var(--ink)}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--mint)}
+  textarea{resize:vertical;min-height:70px}
+  label{display:block;font-size:13px;color:var(--sub);margin:0 0 5px 3px;font-weight:700}
+  .field{margin-bottom:13px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:0}
+  .muted{color:var(--sub);font-size:13px}
+
+  /* ===== phone shell ===== */
+  .app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--cream);
+    background-image:radial-gradient(rgba(120,108,86,.06) 1px, transparent 1.5px);background-size:20px 20px;
+    position:relative;box-shadow:0 0 50px rgba(0,0,0,.18);padding-bottom:96px}
+  .appbar{padding:20px 20px 10px;text-align:center;position:relative}
+  .appbar::before{content:'';position:absolute;top:7px;left:22px;width:60px;height:19px;border-radius:2px;
+    transform:rotate(-8deg);opacity:.85;box-shadow:0 1px 2px rgba(0,0,0,.08);
+    background:repeating-linear-gradient(45deg,#bfe6d6 0 4px,#a9dcc8 4px 8px)}
+  .appbar::after{content:'';position:absolute;top:5px;right:26px;width:52px;height:17px;border-radius:2px;
+    transform:rotate(7deg);opacity:.9;box-shadow:0 1px 2px rgba(0,0,0,.08);background:#cdeae0;
+    background-image:radial-gradient(#ffffffaa 1.5px,transparent 1.7px);background-size:7px 7px}
+  .appbar .ttl{font-size:25px;font-weight:800;letter-spacing:.5px;
+    display:inline-flex;align-items:center;gap:7px}
+  .appbar .ttl .cross{color:var(--mint-d)}.appbar .ttl .heart{color:var(--pink)}
+  .appbar .sub{font-size:11px;color:var(--sub);letter-spacing:2px;margin-top:-2px;font-weight:700}
+  .content{padding:6px 16px 10px}
+
+  /* team bar */
+  .teambar{display:flex;align-items:center;gap:8px;background:var(--mint-soft);
+    border-radius:18px;padding:10px 14px;margin:4px 0 16px}
+  .teambar .tlabel{font-weight:800;color:var(--mint-d);display:flex;align-items:center;gap:6px;font-size:14px}
+  .avatars{display:flex;align-items:center;margin-left:auto}
+  .av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:800;font-size:12px;border:2px solid var(--mint-soft);margin-left:-8px}
+  .av.add{background:#fff;color:var(--mint-d);border:2px dashed var(--mint);margin-left:-2px}
+
+  /* cards */
+  .card{background:var(--card);border-radius:var(--radius);padding:16px 16px 16px 30px;margin-bottom:14px;
+    position:relative;box-shadow:0 2px 5px rgba(120,140,135,.10),0 10px 22px rgba(120,140,135,.12)}
+  .card::before{content:'';position:absolute;left:8px;top:15px;bottom:15px;width:13px;
+    background:radial-gradient(circle at 6px 6px, #efe9dd 0 3px, #d7cdb9 3px 3.9px, transparent 4.3px) 0 0/13px 26px repeat-y}
+  .card.flat{padding:14px}
+  .card.flat::before{display:none}
+  .card.tint-mint{background:linear-gradient(180deg,#f1faf6,#fff)}
+  .card.tint-pink{background:linear-gradient(180deg,#fdeff3,#fff)}
+  .card.tint-amber{background:linear-gradient(180deg,#fdf5ea,#fff)}
+  .chead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .chead .ic{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+  .ic.mint{background:var(--mint-soft)}.ic.pink{background:var(--pink-soft)}.ic.amber{background:var(--amber-soft)}.ic.blue{background:var(--blue-soft)}
+  .chead .ct{font-weight:800;font-size:16px}
+  .chead .cact{margin-left:auto;display:flex;gap:6px}
+  .cfoot{font-size:11px;color:var(--sub);margin-top:10px;display:flex;align-items:center;gap:6px}
+
+  /* buttons */
+  .btn{background:var(--mint);color:#fff;padding:11px 17px;border-radius:14px;font-weight:800;
+    display:inline-flex;align-items:center;gap:6px;justify-content:center;box-shadow:0 3px 8px rgba(124,205,179,.35)}
+  .btn:active{transform:translateY(1px)}
+  .btn.pink{background:var(--pink);box-shadow:0 3px 8px rgba(242,163,184,.35)}
+  .btn.ghost{background:var(--mint-soft);color:var(--mint-d);box-shadow:none}
+  .btn.ghostp{background:var(--pink-soft);color:var(--pink-d);box-shadow:none}
+  .btn.subtle{background:#f0ebe3;color:var(--ink);box-shadow:none}
+  .btn.danger{background:var(--pink-soft);color:var(--pink-d);box-shadow:none}
+  .btn.sm{padding:7px 11px;font-size:13px;border-radius:11px}
+  .btn.block{width:100%}
+  .iconbtn{width:34px;height:34px;border-radius:11px;background:var(--mint-soft);color:var(--mint-d);
+    display:flex;align-items:center;justify-content:center;font-size:15px}
+
+  .pill{font-size:11px;padding:3px 10px;border-radius:999px;font-weight:800}
+  .pill.req{background:var(--pink-soft);color:var(--pink-d)}
+  .pill.dummy{background:var(--mint);color:#fff}
+  .pill.on{background:var(--mint-soft);color:var(--mint-d)}
+  .pill.off{background:#f0ebe3;color:var(--sub)}
+  .tag{font-size:12px;padding:3px 10px;border-radius:999px;background:#f0ebe3;color:var(--sub);font-weight:700}
+  .tag.t{background:var(--mint-soft);color:var(--mint-d)}
+  .tag.date{background:var(--amber-soft);color:var(--amber)}
+  .tag.stock{background:var(--mint-soft);color:var(--mint-d)}
+  .tag.stock.low{background:var(--pink-soft);color:var(--pink-d)}
+  .factag{font-size:11px;padding:2px 9px;border-radius:999px;font-weight:800;display:inline-block;margin:3px 4px 0 0}
+  .facdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+  .facbar{width:6px;align-self:stretch;border-radius:6px;flex-shrink:0}
+  .facfilter{display:flex;gap:7px;flex-wrap:wrap;margin:0 2px 14px}
+  .tags{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0}
+
+  /* dose line (home style) */
+  .doseline{display:flex;align-items:center;gap:12px;padding:8px 4px}
+  .doseline .when{display:flex;align-items:center;gap:6px;width:62px;font-weight:800;color:var(--ink)}
+  .doseline .dn{font-weight:700}
+  .doseline .du{margin-left:auto;color:var(--sub);font-weight:700}
+  .hr{height:1px;background:var(--line);margin:2px 0}
+
+  /* list item rows */
+  .lrow{display:flex;align-items:center;gap:12px;padding:13px;border-radius:var(--radius-sm);
+    background:#fff;box-shadow:var(--shadow);margin-bottom:10px}
+  .lrow .ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+  .lrow .grow{flex:1;min-width:0}
+  .lrow .t1{font-weight:800}
+  .lrow .t2{font-size:12px;color:var(--sub)}
+  .lrow .star{font-size:18px;color:#d9d2c8}.lrow .star.on{color:var(--amber)}
+
+  /* patient avatar */
+  .pav{width:46px;height:46px;border-radius:16px;display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:800;font-size:18px;flex-shrink:0}
+
+  /* tabs (chips, scrollable) */
+  .tabs{display:flex;gap:7px;overflow-x:auto;padding:2px 0 10px;-webkit-overflow-scrolling:touch}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:8px 14px;border-radius:999px;background:#fff;color:var(--sub);font-weight:800;font-size:13px;
+    white-space:nowrap;box-shadow:var(--shadow);flex-shrink:0}
+  .tab.active{background:var(--mint);color:#fff}
+
+  /* med card */
+  .med{background:#fff;border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
+  .med.stopped{opacity:.55}
+  .med .mname{font-weight:800;font-size:16px}
+  .med .mdose{color:var(--sub);font-weight:700;font-size:13px}
+  .med .mpurpose{font-size:14px;margin-top:2px}
+  .med .mnote{font-size:13px;color:var(--sub);background:#faf7f2;border-radius:10px;padding:9px 11px;margin-top:8px;white-space:pre-wrap}
+  .med .acts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+
+  /* check rows */
+  .checkrow{display:flex;align-items:center;gap:12px;padding:13px;border-radius:var(--radius-sm);
+    background:#fff;box-shadow:var(--shadow);margin-bottom:9px}
+  .checkrow .cb{width:30px;height:30px;border-radius:50%;border:2.5px solid var(--line);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:15px;color:transparent}
+  .checkrow.done{background:var(--mint-soft)}
+  .checkrow.done .cb{background:var(--mint);border-color:var(--mint);color:#fff}
+  .checkrow .cn{font-weight:800}
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:6px}
+  .cal .d{border-radius:10px;padding:7px 2px;text-align:center;font-size:11px;background:#faf7f2}
+  .cal .d .dv{font-weight:800;margin-top:2px}
+  .cal .d.full{background:var(--mint-soft)}.cal .d.part{background:var(--amber-soft)}
+  .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .calgrid.head{margin-bottom:4px}
+  .calgrid.head .cw{text-align:center;font-size:11px;color:var(--sub);font-weight:800;padding:2px 0}
+  .cd{min-height:48px;border-radius:10px;background:#faf7f2;padding:4px 0 2px;text-align:center;cursor:pointer}
+  .cd.empty{background:transparent;cursor:default}
+  .cd.today{outline:2px solid var(--mint)}
+  .cd.sel{background:var(--mint-soft)}
+  .cdn{font-weight:800;font-size:13px}
+  .cdd{font-size:10px;line-height:1.15;height:24px;overflow:hidden}
+  .adh{display:flex;align-items:center;gap:14px}
+  .adh .num{font-size:30px;font-weight:800}
+  .progress{height:12px;background:#eee6dc;border-radius:999px;overflow:hidden}
+  .progress>span{display:block;height:100%;background:var(--mint);border-radius:999px}
+
+  /* drug info */
+  .drug{background:#fff;border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
+  .drug .dn{font-weight:800;font-size:16px}
+  .drug .dc{display:inline-block;font-size:11px;padding:2px 9px;border-radius:999px;background:var(--mint-soft);color:var(--mint-d);font-weight:800;margin-left:6px}
+  .drug .da{font-size:12px;color:var(--sub);margin-top:2px}
+  .drug dl{margin:10px 0 0;display:grid;grid-template-columns:auto 1fr;gap:5px 12px}
+  .drug dt{font-weight:800;color:var(--sub);font-size:13px;white-space:nowrap}
+  .drug dd{margin:0;font-size:14px}
+  .infobox{background:var(--mint-soft);border-radius:12px;padding:12px;font-size:13px;margin-top:8px}
+  .infobox b{color:var(--mint-d)} .infobox a{color:var(--blue)}
+
+  .empty{text-align:center;color:var(--sub);padding:30px 10px}
+  .empty .big{font-size:40px;margin-bottom:6px}
+
+  /* modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(65,81,78,.40);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+  .modal{background:#fff;width:100%;max-width:480px;border-radius:26px 26px 0 0;padding:22px;max-height:92vh;overflow:auto;animation:up .22s ease}
+  @keyframes up{from{transform:translateY(34px);opacity:.5}to{transform:none;opacity:1}}
+  .modal h3{margin:0 0 14px;font-size:19px;font-weight:800}
+  .modal .foot{display:flex;gap:10px;margin-top:18px}
+  .chipwrap{display:flex;gap:7px;flex-wrap:wrap}
+  .chip{padding:8px 13px;border-radius:999px;border:2px solid var(--line);background:#fff;color:var(--sub);font-weight:800;font-size:14px}
+  .chip.sel{border-color:var(--mint);background:var(--mint-soft);color:var(--mint-d)}
+
+  /* bottom nav */
+  .bottomnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;
+    background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:flex-end;
+    padding:8px 6px calc(8px + env(safe-area-inset-bottom));z-index:40;box-shadow:0 -4px 16px rgba(120,140,135,.08)}
+  .nav{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--sub);font-size:10px;font-weight:800;padding:4px 0}
+  .nav .ni{font-size:21px;line-height:1}
+  .nav.active{color:var(--mint-d)}
+  .nav.center{margin-top:-22px}
+  .nav.center .ni{width:56px;height:56px;border-radius:18px;background:#3a3633;color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:25px;box-shadow:0 6px 16px rgba(58,54,51,.4);
+    border:2px dashed rgba(255,255,255,.55)}
+  .nav.center.active .ni{background:var(--mint-d)}
+
+  /* sheet (print) */
+  .sheet{background:#fff;border-radius:var(--radius-sm);padding:22px;box-shadow:var(--shadow)}
+  .sheet h2.sh{font-size:20px;border-bottom:3px solid var(--mint);padding-bottom:8px;margin:0 0 4px}
+  .sheet section{margin-top:16px}
+  .sheet section h3{font-size:14px;background:var(--mint);color:#fff;padding:5px 12px;border-radius:9px;display:inline-block;margin:0 0 9px}
+  .sheet table{width:100%;border-collapse:collapse;font-size:13px}
+  .sheet th,.sheet td{border:1px solid #dfe7e3;padding:6px 8px;text-align:left;vertical-align:top}
+  .sheet th{background:var(--mint-soft)}
+  .sheet .sig{margin-top:20px;font-size:11px;color:var(--sub);border-top:1px dashed var(--line);padding-top:10px}
+
+  table.simple{width:100%;border-collapse:collapse;font-size:13px}
+  table.simple th,table.simple td{padding:8px 7px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  table.simple th{color:var(--sub);font-size:12px}
+
+  @media print{
+    body{background:#fff}.app{box-shadow:none;max-width:none;padding:0}
+    .appbar,.bottomnav,.tabs,.no-print,.teambar{display:none !important}
+    .content{padding:0}.sheet{box-shadow:none;padding:0}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="appbar">
+    <div class="ttl"><span class="cross">✚</span> ナースのドラッグ手帳 <span class="heart">♥</span></div>
+    <div class="sub">NURSE'S DRUG DIARY</div>
+  </div>
+  <div class="content" id="content"></div>
+  <nav class="bottomnav">
+    <button class="nav" data-v="home"   onclick="setView('home')"><span class="ni">🏠</span>ホーム</button>
+    <button class="nav" data-v="notes"  onclick="setView('notes')"><span class="ni">📝</span>共有ノート</button>
+    <button class="nav center" data-v="chart" onclick="setView('chart')"><span class="ni">📒</span>カルテ</button>
+    <button class="nav" data-v="calendar" onclick="setView('calendar')"><span class="ni">📅</span>予定表</button>
+    <button class="nav" data-v="more"   onclick="setView('more')"><span class="ni">☰</span>その他</button>
+  </nav>
+</div>
+<div id="modalRoot"></div>
+
+<script>
+/* =========================================================
+   ナースのドラッグ手帳 (Nurse's Drug Diary)
+   端末内保存(localStorage)・患者情報は外部送信なし
+   db: { patients:[...], board:[...], team:[{id,name}] }
+   patient: {id,name,kana,info,nextVisit,nextVisitNote,
+     medications:[{id,name,dose,timing[],purpose,note,start,end,stock,stockAlert,active}],
+     health:[], handoffs:[], files:[{id,label,url,date}], intakeLog:{ "YYYY-MM-DD":{ "medId@timing":true } } }
+   ========================================================= */
+const STORE_KEY='okusuri_note_v1';
+const TIMINGS=['朝','昼','夕','眠前','頓服','その他'];
+const SCHEDULED=['朝','昼','夕','眠前','その他'];
+const TIMING_ICON={'朝':'☀️','昼':'🌤','夕':'🌙','眠前':'🛏','頓服':'💊','その他':'•'};
+const PALETTE=['#7ccdb3','#f2a3b8','#7fb2e8','#e6a25a','#a99be0','#5fbf9e','#ef9aa9'];
+/* 施設（色分け・複数所属OK）。名前を変えたいときはここを編集 */
+const FACILITIES=[
+  {name:'頚城',   color:'#5b9bd5', soft:'#e7f0fc'},
+  {name:'仲町',   color:'#e87d99', soft:'#fce7ed'},
+  {name:'すみのや', color:'#dd9234', soft:'#fdf2e1'}
+];
+function facMeta(name){ return FACILITIES.find(f=>f.name===name); }
+function facColor(p){ const f=facMeta((p.facilities||[])[0]); return f?f.color:''; }
+function facDot(p){ const c=facColor(p); return c?`<span class="facdot" style="background:${c}"></span>`:''; }
+function facChips(p){ return (p.facilities||[]).map(n=>{ const f=facMeta(n); return f?`<span class="factag" style="background:${f.soft};color:${f.color}">${esc(n)}</span>`:''; }).join(''); }
+const BOARD_CATS={topic:['お知らせ','今週のナース事変','ヒヤリ・気づき','その他'],
+                  tips:['AIの使い方','パソコンの使い方','アプリの使い方','その他']};
+
+/* ---- 薬データベース（約50種・簡易要約） ---- */
+const DRUG_DB=[
+ {n:'アムロジピン',a:['ノルバスク','アムロジン'],c:'降圧薬(Ca拮抗薬)',e:'血管を広げて血圧を下げる。狭心症にも使う。',s:'足のむくみ、ほてり、動悸、頭痛、歯ぐきの腫れ',w:'グレープフルーツで効きが強まることがある。自己判断で中止しない。'},
+ {n:'ニフェジピン',a:['アダラート'],c:'降圧薬(Ca拮抗薬)',e:'血圧を下げる。狭心症にも。',s:'ほてり、頭痛、動悸、むくみ',w:'徐放錠は割らずに飲む。グレープフルーツ注意。'},
+ {n:'ロサルタン',a:['ニューロタン'],c:'降圧薬(ARB)',e:'血圧を下げ、腎臓を保護する。',s:'めまい、だるさ、高カリウム血症',w:'腎機能・カリウム値の確認が必要。妊娠中は禁忌。'},
+ {n:'カンデサルタン',a:['ブロプレス'],c:'降圧薬(ARB)',e:'血圧を下げる。心不全にも。',s:'めまい、だるさ、高カリウム血症',w:'妊娠中は禁忌。脱水に注意。'},
+ {n:'テルミサルタン',a:['ミカルディス'],c:'降圧薬(ARB)',e:'血圧を下げる。',s:'めまい、高カリウム血症',w:'妊娠中は禁忌。'},
+ {n:'エナラプリル',a:['レニベース'],c:'降圧薬(ACE阻害薬)',e:'血圧を下げる。心不全にも。',s:'空咳、めまい、高カリウム血症',w:'空咳が出やすい。妊娠中は禁忌。'},
+ {n:'ビソプロロール',a:['メインテート','ビソノテープ'],c:'降圧・心臓の薬(β遮断薬)',e:'脈を落ち着け血圧を下げる。心不全・不整脈にも。',s:'徐脈、だるさ、息切れ、手足の冷え',w:'急にやめると危険。喘息の人は注意。'},
+ {n:'カルベジロール',a:['アーチスト'],c:'降圧・心臓の薬(β遮断薬)',e:'血圧を下げ心臓の負担を減らす。心不全にも。',s:'徐脈、めまい、だるさ',w:'急な中止は避ける。'},
+ {n:'フロセミド',a:['ラシックス'],c:'利尿薬',e:'余分な水分を尿で出し、むくみ・血圧・心不全を改善。',s:'脱水、低カリウム血症、こむら返り、めまい',w:'水分・電解質の確認を。朝に飲むと夜間頻尿を避けやすい。'},
+ {n:'アゾセミド',a:['ダイアート'],c:'利尿薬(長時間型ループ)',e:'うっ血性心不全のむくみをとる。',s:'脱水、低カリウム血症、こむら返り、頻尿',w:'水分・電解質に注意。朝に飲むと夜間頻尿を避けやすい。'},
+ {n:'スピロノラクトン',a:['アルダクトンA'],c:'利尿薬(カリウム保持性)',e:'むくみ・血圧・心不全を改善。',s:'高カリウム血症、女性化乳房',w:'カリウムが上がりやすい。腎機能注意。'},
+ {n:'エンレスト',a:['サクビトリルバルサルタン'],c:'心不全治療薬(ARNI)',e:'慢性心不全の治療。心臓の負担を減らす。',s:'低血圧・めまい、高カリウム血症、腎機能低下、咳',w:'ACE阻害薬と併用しない(切替時は間隔を)。妊娠中禁忌。脱水時は血圧低下注意。'},
+ {n:'メトホルミン',a:['メトグルコ','グリコラン'],c:'糖尿病薬',e:'肝臓からの糖の放出を抑え血糖を下げる。',s:'下痢・吐き気、まれに乳酸アシドーシス',w:'造影剤検査の前後は休薬。脱水・腎機能低下時は注意。'},
+ {n:'グリメピリド',a:['アマリール'],c:'糖尿病薬(SU薬)',e:'インスリン分泌を促し血糖を下げる。',s:'低血糖、体重増加',w:'食事が摂れない時は低血糖に注意。'},
+ {n:'シタグリプチン',a:['ジャヌビア','グラクティブ'],c:'糖尿病薬(DPP-4)',e:'血糖に応じてインスリン分泌を促す。',s:'低血糖(併用時)、便秘',w:'併用時は低血糖に注意。'},
+ {n:'エンパグリフロジン',a:['ジャディアンス'],c:'糖尿病薬(SGLT2)',e:'尿に糖を出して血糖を下げる。心・腎保護も。',s:'脱水、尿路・性器感染、頻尿',w:'こまめな水分補給を。シックデイは休薬を相談。'},
+ {n:'インスリン',a:['ヒューマログ','ランタス','ノボラピッド','トレシーバ'],c:'糖尿病薬(注射)',e:'血糖を下げる注射薬。',s:'低血糖、注射部位の腫れ',w:'種類で効く時間が違う。低血糖対応(ブドウ糖)を常備。'},
+ {n:'アトルバスタチン',a:['リピトール'],c:'脂質異常症薬(スタチン)',e:'コレステロールを下げ動脈硬化を防ぐ。',s:'筋肉痛・脱力(横紋筋融解症)、肝障害',w:'強い筋肉痛・赤褐色尿は受診。'},
+ {n:'ロスバスタチン',a:['クレストール'],c:'脂質異常症薬(スタチン)',e:'コレステロールを下げる。',s:'筋肉痛、肝障害',w:'筋肉痛が続く時は相談。'},
+ {n:'ワルファリン',a:['ワーファリン'],c:'抗凝固薬(血をサラサラに)',e:'血のかたまりを防ぐ。',s:'出血(鼻血・歯ぐき・あざ・血便)',w:'納豆・青汁・クロレラは禁止。定期的な血液検査(PT-INR)が必要。'},
+ {n:'エドキサバン',a:['リクシアナ'],c:'抗凝固薬(DOAC)',e:'血のかたまりを防ぐ。',s:'出血、貧血',w:'納豆制限は不要。出血兆候に注意。腎機能で用量調整。'},
+ {n:'アピキサバン',a:['エリキュース'],c:'抗凝固薬(DOAC)',e:'血のかたまりを防ぐ。',s:'出血、あざ',w:'1日2回。出血兆候に注意。'},
+ {n:'リバーロキサバン',a:['イグザレルト'],c:'抗凝固薬(DOAC)',e:'血のかたまりを防ぐ。',s:'出血',w:'食後に飲む(吸収のため)。'},
+ {n:'アスピリン',a:['バイアスピリン'],c:'抗血小板薬',e:'血小板を抑え、脳梗塞・心筋梗塞を予防。',s:'胃の荒れ・出血、あざ',w:'胃薬と併用することが多い。手術・抜歯前は要相談。'},
+ {n:'クロピドグレル',a:['プラビックス'],c:'抗血小板薬',e:'血のかたまりを防ぎ脳・心臓を守る。',s:'出血、あざ',w:'手術・抜歯前は医師に相談。'},
+ {n:'ランソプラゾール',a:['タケプロン'],c:'胃薬(PPI)',e:'胃酸を抑え、胃炎・逆流性食道炎・潰瘍を治す。',s:'下痢、便秘、長期で骨折・低マグネシウム',w:'OD錠は水なしでも溶ける。'},
+ {n:'ボノプラザン',a:['タケキャブ'],c:'胃薬(P-CAB)',e:'強力に胃酸を抑える。逆流性食道炎・潰瘍に。',s:'便秘、下痢',w:'効果が出るのが早い。'},
+ {n:'ファモチジン',a:['ガスター'],c:'胃薬(H2ブロッカー)',e:'胃酸を抑える。',s:'便秘、まれに意識障害(高齢・腎機能低下時)',w:'腎機能が悪いと減量が必要。'},
+ {n:'レバミピド',a:['ムコスタ'],c:'胃薬(粘膜保護)',e:'胃の粘膜を守り荒れを防ぐ。',s:'便秘、発疹',w:'痛み止めと一緒に処方されることが多い。'},
+ {n:'酸化マグネシウム',a:['マグミット','カマ'],c:'便秘薬・制酸薬',e:'便をやわらかくして出す。',s:'下痢、高マグネシウム血症(高齢・腎機能低下)',w:'多めの水で飲む。だるさ・吐き気は受診。'},
+ {n:'センノシド',a:['プルゼニド'],c:'便秘薬(刺激性)',e:'腸を刺激して便を出す。',s:'腹痛、下痢、長期で効きにくくなる',w:'就寝前に。連用しすぎない。'},
+ {n:'アセトアミノフェン',a:['カロナール','アンヒバ'],c:'解熱鎮痛薬',e:'熱を下げ痛みをやわらげる。胃にやさしい。',s:'まれに肝障害',w:'1日の上限量を守る。市販薬との重複に注意。'},
+ {n:'ロキソプロフェン',a:['ロキソニン'],c:'解熱鎮痛薬(NSAIDs)',e:'痛み・炎症・熱を抑える。',s:'胃の荒れ・潰瘍、腎障害、むくみ',w:'空腹時は避け食後に。高齢・腎機能低下時は注意。'},
+ {n:'セレコキシブ',a:['セレコックス'],c:'消炎鎮痛薬(NSAIDs)',e:'関節などの痛み・炎症を抑える。',s:'胃腸障害(比較的少なめ)、むくみ',w:'心血管リスクのある人は相談。'},
+ {n:'ドネペジル',a:['アリセプト'],c:'認知症治療薬',e:'アルツハイマー型認知症の進行をゆるやかにする。',s:'吐き気、食欲低下、下痢、徐脈、興奮',w:'少量から開始。脈が遅い人は注意。'},
+ {n:'メマンチン',a:['メマリー'],c:'認知症治療薬',e:'中等度〜高度の認知症に。興奮をやわらげることも。',s:'めまい、眠気、便秘',w:'腎機能で用量調整。OD錠は水なしでも溶ける。'},
+ {n:'レボドパ・カルビドパ',a:['メネシット','ネオドパストン'],c:'パーキンソン病薬',e:'動きにくさ・ふるえなどの症状を改善。',s:'吐き気、不随意運動、立ちくらみ、幻覚',w:'飲む時間を守る。急な中止は危険。'},
+ {n:'ブロチゾラム',a:['レンドルミン'],c:'睡眠薬(短時間型)',e:'寝つきを良くする。',s:'ふらつき、転倒、もうろう、依存',w:'高齢者は転倒に注意。飲んだらすぐ就寝。'},
+ {n:'ゾルピデム',a:['マイスリー'],c:'睡眠薬(短時間型)',e:'寝つきを良くする。',s:'ふらつき、転倒、夜間の異常行動・健忘',w:'飲んで動き回らない。アルコールと併用しない。'},
+ {n:'エスゾピクロン',a:['ルネスタ'],c:'睡眠薬',e:'寝つき・睡眠を改善。',s:'苦味、ふらつき、眠気の持ち越し',w:'高齢者は少量から。'},
+ {n:'ミルタザピン',a:['リフレックス','レメロン'],c:'抗うつ薬',e:'うつ・不眠・食欲低下を改善。',s:'眠気、体重増加、口の渇き',w:'効果が出るまで数週間。自己中断しない。'},
+ {n:'セルトラリン',a:['ジェイゾロフト'],c:'抗うつ薬(SSRI)',e:'うつ・不安をやわらげる。',s:'吐き気、下痢、眠気・不眠',w:'急にやめない。効果は数週間で。'},
+ {n:'アリピプラゾール',a:['エビリファイ'],c:'抗精神病薬',e:'統合失調症・双極性障害などに。興奮や気分の波を整える。',s:'不眠、アカシジア(そわそわ)、手のふるえ、眠気',w:'自己判断で中止しない。少量から。高齢者は転倒・誤嚥に注意。'},
+ {n:'リスペリドン',a:['リスパダール'],c:'抗精神病薬',e:'幻覚・興奮・イライラをやわらげる。',s:'眠気、ふらつき、手のふるえ・こわばり、誤嚥',w:'高齢者は少量から。転倒・誤嚥に注意。'},
+ {n:'クエチアピン',a:['セロクエル'],c:'抗精神病薬',e:'興奮・不眠をやわらげる。',s:'眠気、ふらつき、体重増加',w:'糖尿病の人は原則禁忌。'},
+ {n:'抑肝散',a:['よくかんさん'],c:'漢方薬',e:'認知症の興奮・イライラ・不眠などに。',s:'低カリウム血症、むくみ、だるさ',w:'長期では電解質チェックを。'},
+ {n:'カルボシステイン',a:['ムコダイン'],c:'去痰薬',e:'痰を出しやすくする。',s:'まれに発疹、下痢',w:'-'},
+ {n:'モンテルカスト',a:['シングレア','キプレス'],c:'喘息・アレルギー薬',e:'気管支の炎症を抑え、喘息やアレルギー性鼻炎に。',s:'頭痛、腹痛、まれに気分変化',w:'発作止めではない。毎日続ける。'},
+ {n:'フェキソフェナジン',a:['アレグラ'],c:'抗アレルギー薬',e:'花粉症・じんましん等のアレルギー症状を抑える。',s:'眠気は少なめ、口の渇き',w:'制酸剤と同時に飲むと効果が落ちることがある。'},
+ {n:'レボチロキシン',a:['チラーヂンS'],c:'甲状腺ホルモン薬',e:'甲状腺機能低下を補う。',s:'動悸、汗、過量で甲状腺機能亢進症状',w:'毎日同じ時間に。自己中断しない。'},
+ {n:'プレドニゾロン',a:['プレドニン'],c:'ステロイド',e:'強い炎症・免疫の異常を抑える。',s:'血糖上昇、感染しやすい、骨粗鬆症、不眠、むくみ',w:'急にやめると危険。指示通り減量する。'},
+ {n:'アレンドロン酸',a:['ボナロン','フォサマック'],c:'骨粗鬆症薬',e:'骨を強くし骨折を防ぐ。',s:'食道の荒れ、まれに顎骨壊死',w:'起床時に多めの水で飲み、30分は横にならない。'},
+ {n:'フェブキソスタット',a:['フェブリク'],c:'高尿酸血症薬',e:'尿酸を下げ痛風を防ぐ。',s:'肝機能異常、飲み始めの発作',w:'発作中の開始は避ける。毎日続ける。'},
+ {n:'アロプリノール',a:['ザイロリック'],c:'高尿酸血症薬',e:'尿酸を下げる。',s:'発疹、まれに重い皮膚障害、肝障害',w:'発疹が出たら中止し受診。腎機能で減量。'},
+ {n:'酢酸亜鉛',a:['ノベルジン'],c:'低亜鉛血症治療薬',e:'不足した亜鉛を補う。',s:'銅欠乏(貧血・白血球減少)、吐き気・腹痛',w:'長期では銅・血算を確認。食後に飲むと胃症状が出にくい。'},
+ {n:'アモキシシリン',a:['サワシリン','パセトシン'],c:'抗菌薬(ペニシリン系)',e:'細菌感染症を治す。',s:'下痢、発疹、アレルギー',w:'ペニシリンアレルギーは禁忌。最後まで飲みきる。'},
+ {n:'レボフロキサシン',a:['クラビット'],c:'抗菌薬(ニューキノロン系)',e:'幅広い細菌感染症に。',s:'腱の障害、下痢、光線過敏、QT延長',w:'制酸剤・鉄剤・乳製品で吸収低下。最後まで飲みきる。'}
+];
+
+let db=load();
+let view='home';
+let currentId=null;       // 選択中の患者(カルテ詳細)
+let currentTab='summary';
+let boardTab='topic';
+let calRef=new Date();
+let calSel=today();
+let facFilter='';
+let pFacs=[];
+
+function load(){
+  try{const d=JSON.parse(localStorage.getItem(STORE_KEY)); if(d&&d.patients)return migrate(d);}catch(e){}
+  return {patients:[],board:[],team:[],events:[]};
+}
+function migrate(d){
+  d.board=d.board||[]; d.team=d.team||[]; d.events=d.events||[];
+  d.patients.forEach(p=>{ p.intakeLog=p.intakeLog||{}; p.files=p.files||[]; p.health=p.health||[]; p.handoffs=p.handoffs||[];
+    p.care=p.care||[]; p.log=p.log||[]; if(p.summary===undefined)p.summary=''; p.facilities=p.facilities||[]; });
+  return d;
+}
+function careStatusRank(s){ return ({'継続':0,'新規':1,'終了':2})[s] ?? 1; }
+function save(){ localStorage.setItem(STORE_KEY,JSON.stringify(db)); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function today(){ return ymd(new Date()); }
+function ymd(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function fmtDate(s){ if(!s)return''; const[y,m,d]=s.split('-'); return `${y}/${m}/${d}`; }
+function fmtMd(s){ if(!s)return''; const[,m,d]=s.split('-'); return `${m}/${d}`; }
+function daysBetween(a,b){ return Math.round((new Date(b)-new Date(a))/86400000); }
+function cur(){ const p=db.patients.find(p=>p.id===currentId); if(p)migrate({patients:[p],board:db.board,team:db.team}); return p||null; }
+function colorOf(i){ return PALETTE[i%PALETTE.length]; }
+function initials(name){ name=(name||'').replace(/\s/g,''); return name.slice(0,2)||'？'; }
+function val(id){ const e=document.getElementById(id); return e?e.value.trim():''; }
+
+/* ===== ナビ ===== */
+function setView(v){ view=v; if(v==='chart'&&db.patients.length===0)currentId=null; render(); }
+function render(){
+  document.querySelectorAll('.nav').forEach(n=>n.classList.toggle('active',n.dataset.v===view));
+  const c=document.getElementById('content');
+  ({home:renderHome,notes:renderNotes,chart:renderChart,calendar:renderCalendar,notify:renderNotify,more:renderMore}[view])(c);
+  window.scrollTo(0,0);
+}
+
+/* ===== チームバー ===== */
+function teamBar(){
+  const avs=db.team.slice(0,6).map((m,i)=>`<span class="av" style="background:${colorOf(i)}" title="${esc(m.name)}">${esc(initials(m.name))}</span>`).join('');
+  return `<div class="teambar">
+    <span class="tlabel">👥 Nurse Team</span>
+    <span class="avatars">${avs}<span class="av add" onclick="openTeamModal()">＋</span></span>
+  </div>`;
+}
+
+/* ===== ホーム ===== */
+function scheduleForPatient(p,date){
+  const out=[];
+  p.medications.forEach(m=>{ if(m.active===false)return; if(m.start&&date<m.start)return; if(m.end&&date>m.end)return;
+    (m.timing||[]).forEach(t=>{ if(SCHEDULED.includes(t))out.push({m,t}); }); });
+  return out;
+}
+function isTaken(p,date,medId,t){ return !!(p.intakeLog[date]&&p.intakeLog[date][medId+'@'+t]); }
+function renderHome(c){
+  const d=today();
+  // 今日の処置・お願い（継続・新規を上に）
+  const care=[]; db.patients.forEach(p=>(p.care||[]).forEach(it=>{ if(it.status==='継続'||it.status==='新規')care.push({p,it}); }));
+  care.sort((a,b)=>careStatusRank(a.it.status)-careStatusRank(b.it.status)||(b.it.date+b.it.id).localeCompare(a.it.date+a.it.id));
+
+  // 残薬不足
+  const low=[]; db.patients.forEach(p=>p.medications.forEach(m=>{
+    if(m.active!==false&&m.stock!=null&&m.stock!==''&&Number(m.stock)<=(Number(m.stockAlert)||7))
+      low.push({p,m}); }));
+  // 受診予定
+  const visits=db.patients.filter(p=>p.nextVisit).map(p=>({p,dd:daysBetween(d,p.nextVisit)}))
+    .filter(v=>v.dd>=-1).sort((a,b)=>a.dd-b.dd).slice(0,3);
+  // 重要申し送り
+  const imp=[]; db.patients.forEach(p=>p.handoffs.filter(h=>h.important).forEach(h=>imp.push({p,h})));
+  imp.sort((a,b)=>(b.h.date+b.h.id).localeCompare(a.h.date+a.h.id));
+
+  c.innerHTML = teamBar()
+    + `<div class="card tint-pink">
+        <div class="chead"><div class="ic pink">🚑</div><div class="ct">緊急時サマリーを見る</div></div>
+        <p class="muted" style="margin-top:-4px">急な受診・引き継ぎのとき。利用者さんを選ぶと、その人の状況サマリーがすぐ開きます。</p>
+        ${db.patients.length? `<div class="chipwrap">${db.patients.map(p=>`<button class="chip" onclick="openPatient('${p.id}')">${facDot(p)}${p.summary?'🚑 ':'👤 '}${esc(p.name)}</button>`).join('')}</div>`
+          : `<div class="muted">まだ利用者がいません。下の「📒 カルテ」から追加できます。</div>`}
+       </div>`
+    + `<div class="card tint-mint">
+        <div class="chead"><div class="ic mint">🩹</div><div class="ct">今日の処置・お願い</div>
+          <div class="cact"><span class="muted">${fmtDate(d)}</span></div></div>
+        ${care.length? care.map(({p,it})=>`<div class="lrow" onclick="openPatient('${p.id}')">
+            <div class="ic mint">${it.status==='継続'?'🔁':'🆕'}</div>
+            <div class="grow"><div class="t1">${esc(p.name)} <span class="pill ${it.status==='継続'?'on':'req'}">${esc(it.status)}</span></div>
+            <div class="t2">${esc(it.title)}${it.detail?' ／ '+esc(it.detail):''}</div></div></div>`).join('')
+          : `<div class="muted">継続・新規の処置がある利用者さんの<b>お名前と処置の内容</b>が、ここに表示されます。<br>「カルテ → 🩹 処置・お願い」から追加できます。</div>`}
+       </div>`
+    + `<div class="card ${low.length?'tint-pink':''}">
+        <div class="chead"><div class="ic pink">⚠️</div><div class="ct">残薬がすくない薬</div></div>
+        ${low.length? low.map(({p,m})=>`<div class="lrow" onclick="openPatient('${p.id}')">
+            <div class="ic pink">💊</div><div class="grow"><div class="t1">${esc(m.name)}</div>
+            <div class="t2">${esc(p.name)} ／ 残り ${esc(String(m.stock))}回分</div></div>
+            <span class="pill req">補充</span></div>`).join('')
+          : `<div class="muted">不足している薬はありません。</div>`}
+       </div>`
+    + `<div class="card">
+        <div class="chead"><div class="ic blue">🏥</div><div class="ct">もうすぐ受診</div></div>
+        ${visits.length? visits.map(({p,dd})=>`<div class="lrow" onclick="openPatient('${p.id}')">
+            <div class="ic blue">📅</div><div class="grow"><div class="t1">${esc(p.name)}</div>
+            <div class="t2">${fmtDate(p.nextVisit)}${p.nextVisitNote?' ／ '+esc(p.nextVisitNote):''}</div></div>
+            <span class="pill ${dd<=1?'req':'on'}">${dd<0?'過ぎ':dd===0?'今日':'あと'+dd+'日'}</span></div>`).join('')
+          : `<div class="muted">予定はありません。</div>`}
+       </div>`
+    + `<div class="card">
+        <div class="chead"><div class="ic amber">📣</div><div class="ct">重要な申し送り</div></div>
+        ${imp.length? imp.slice(0,3).map(({p,h})=>`<div class="lrow" onclick="openPatient('${p.id}')">
+            <div class="ic amber">⚠️</div><div class="grow"><div class="t1">${esc(p.name)}</div>
+            <div class="t2">${esc(h.text)}</div></div></div>`).join('')
+          : `<div class="muted">重要な申し送りはありません。</div>`}
+       </div>`
+    + `<button class="btn block" onclick="setView('chart')">📒 カルテ（利用者一覧）を見る</button>`;
+}
+
+/* ===== カルテ（利用者一覧／詳細） ===== */
+function openPatient(id){ currentId=id; currentTab='summary'; view='chart'; render(); }
+function renderChart(c){
+  if(!currentId){ // 一覧
+    const shown=db.patients.map((p,i)=>({p,i})).filter(({p})=>!facFilter||(p.facilities||[]).includes(facFilter));
+    const list=db.patients.length? (shown.length? shown.map(({p,i})=>{
+      const meds=p.medications.filter(m=>m.active!==false).length;
+      const fc=facColor(p);
+      return `<div class="lrow" onclick="openPatient('${p.id}')">
+        ${fc?`<div class="facbar" style="background:${fc}"></div>`:''}
+        <div class="pav" style="background:${fc||colorOf(i)}">${esc(initials(p.name))}</div>
+        <div class="grow"><div class="t1">${esc(p.name)}</div>
+          <div class="t2">${esc(p.kana||'')}　薬 ${meds}件</div>${facChips(p)}</div>
+        <span style="color:var(--sub)">›</span></div>`;
+    }).join('') : `<div class="empty"><p class="muted">「${esc(facFilter)}」の利用者さんはいません。</p></div>`)
+      : `<div class="empty"><div class="big">📒</div><p class="muted">まだ利用者がいません。<br>「＋ 利用者を追加」から始めましょう。</p></div>`;
+    const fbtn=(name,col)=>`<button class="chip ${facFilter===name?'sel':''}" style="${facFilter===name&&col?`background:${col};border-color:${col};color:#fff`:''}" onclick="facFilter='${name}';render()">${name||'すべて'}</button>`;
+    c.innerHTML = `<div class="chead" style="margin:2px 2px 12px"><div class="ic mint">📒</div><div class="ct">カルテ（利用者一覧）</div></div>`
+      + `<div class="facfilter">${fbtn('','')}${FACILITIES.map(f=>fbtn(f.name,f.color)).join('')}</div>`
+      + `<button class="btn block" onclick="openPatientModal()">＋ 利用者を追加</button><div style="height:14px"></div>`
+      + list;
+    return;
+  }
+  const p=cur(); if(!p){ currentId=null; return renderChart(c); }
+  const i=db.patients.findIndex(x=>x.id===p.id);
+  let visit='';
+  if(p.nextVisit){ const dd=daysBetween(today(),p.nextVisit);
+    visit=`<div class="tag date" style="margin-top:6px">🏥 受診 ${fmtDate(p.nextVisit)} ${dd<0?'(過ぎ)':dd===0?'(今日)':'(あと'+dd+'日)'}</div>`; }
+  c.innerHTML = `
+    <button class="btn ghost sm" onclick="currentId=null;render()">‹ 一覧へ</button>
+    <div class="card tint-mint" style="margin-top:10px">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div class="pav" style="background:${facColor(p)||colorOf(i)}">${esc(initials(p.name))}</div>
+        <div style="flex:1"><div style="font-weight:800;font-size:18px">${esc(p.name)}</div>
+          <div class="muted">${esc(p.kana||'')}</div>
+          <div class="muted">${esc(p.info||'')||'基本情報は未入力'}</div>
+          ${facChips(p)?`<div style="margin-top:4px">${facChips(p)}</div>`:''}${visit}</div>
+        <button class="iconbtn" onclick="openPatientModal('${p.id}')">✎</button>
+      </div>
+    </div>
+    <div class="tabs">
+      ${ctab('summary','🚑 経過・サマリー')}${ctab('med','💊 薬')}${ctab('care','🩹 処置・お願い')}${ctab('health','🩺 健康')}${ctab('handoff','📝 申し送り')}${ctab('files','📎 資料')}${ctab('sheet','🖨 説明シート')}
+    </div>
+    <div id="tabBody"></div>`;
+  renderCTab();
+}
+function ctab(k,l){ return `<button class="tab ${currentTab===k?'active':''}" onclick="currentTab='${k}';renderCTab()">${l}</button>`; }
+function renderCTab(){ const b=document.getElementById('tabBody'); if(!b)return;
+  (({summary:renderSummary,med:renderMeds,care:renderCare,health:renderHealth,handoff:renderHandoff,files:renderFiles,sheet:renderSheet}[currentTab])||renderSummary)(b); }
+
+/* 薬 */
+function medDateLabel(m){ if(!m.start)return''; const d=daysBetween(m.start,today()); return `${fmtDate(m.start)}から（${d>=0?d+'日目':'予定'}）`; }
+function renderMeds(b){
+  const p=cur(); const meds=p.medications;
+  const body = meds.length? meds.map(m=>{
+    const low=(m.stock!=null&&m.stock!==''&&Number(m.stock)<=(Number(m.stockAlert)||7));
+    return `<div class="med ${m.active===false?'stopped':''}">
+      <div style="display:flex;align-items:flex-start;gap:8px">
+        <div><span class="mname">${esc(m.name)}</span> <span class="mdose">${esc(m.dose||'')}</span></div>
+        <span class="pill ${m.active===false?'off':'on'}" style="margin-left:auto">${m.active===false?'休薬中':'服用中'}</span>
+      </div>
+      <div class="tags">
+        ${(m.timing||[]).map(t=>`<span class="tag t">${TIMING_ICON[t]||''}${esc(t)}</span>`).join('')}
+        ${m.start?`<span class="tag date">📅 ${medDateLabel(m)}</span>`:''}
+        ${(m.stock!=null&&m.stock!=='')?`<span class="tag stock ${low?'low':''}">💊 残${esc(String(m.stock))}回${low?' ⚠️':''}</span>`:''}
+      </div>
+      ${m.purpose?`<div class="mpurpose">🎯 ${esc(m.purpose)}</div>`:''}
+      ${m.note?`<div class="mnote">${esc(m.note)}</div>`:''}
+      <div class="acts">
+        <button class="btn ghost sm" onclick="openMedModal('${m.id}')">編集</button>
+        ${(m.stock!=null&&m.stock!=='')?`<button class="btn ghost sm" onclick="refill('${m.id}')">補充</button>`:''}
+        <button class="btn ghost sm" onclick="toggleMed('${m.id}')">${m.active===false?'再開':'休薬'}</button>
+        <button class="btn danger sm" onclick="delMed('${m.id}')">削除</button>
+      </div></div>`;}).join('')
+    : `<div class="empty"><div class="big">💊</div><p class="muted">まだ薬が登録されていません</p></div>`;
+  b.innerHTML=`<button class="btn block" onclick="openMedModal()">＋ 薬を追加</button><div style="height:14px"></div>${body}`;
+}
+function toggleMed(id){ const m=cur().medications.find(x=>x.id===id); m.active=(m.active===false); save(); renderCTab(); }
+function delMed(id){ if(!confirm('この薬を削除しますか？'))return; const p=cur(); p.medications=p.medications.filter(x=>x.id!==id); save(); renderCTab(); }
+function refill(id){ const m=cur().medications.find(x=>x.id===id); const v=prompt('補充後の残り回数を入力',m.stock||''); if(v===null)return;
+  const n=parseInt(v,10); if(isNaN(n)){alert('数字を入力してください');return;} m.stock=n; save(); renderCTab(); }
+
+/* 服薬チェック */
+function toggleIntake(date,medId,t){
+  const p=cur(); const m=p.medications.find(x=>x.id===medId); p.intakeLog[date]=p.intakeLog[date]||{};
+  const k=medId+'@'+t;
+  if(p.intakeLog[date][k]){ delete p.intakeLog[date][k]; if(m&&m.stock!=null&&m.stock!=='')m.stock=Number(m.stock)+1; }
+  else{ p.intakeLog[date][k]=true; if(m&&m.stock!=null&&m.stock!==''&&Number(m.stock)>0)m.stock=Number(m.stock)-1; }
+  save(); renderCTab();
+}
+function renderCheck(b){
+  const p=cur(); const d=today(); const order={'朝':0,'昼':1,'夕':2,'眠前':3,'その他':4};
+  const sched=scheduleForPatient(p,d).sort((a,c)=>order[a.t]-order[c.t]);
+  const todayHtml = sched.length? sched.map(({m,t})=>{ const done=p.intakeLog[d]&&p.intakeLog[d][m.id+'@'+t];
+    return `<div class="checkrow ${done?'done':''}" onclick="toggleIntake('${d}','${m.id}','${t}')">
+      <div class="cb">✓</div><div><span class="tag t" style="margin-right:6px">${TIMING_ICON[t]||''}${t}</span>
+      <span class="cn">${esc(m.name)}</span> <span class="muted">${esc(m.dose||'')}</span></div>
+      <div style="margin-left:auto" class="muted">${done?'済み':'未'}</div></div>`; }).join('')
+    : `<p class="muted">今日 予定の定期薬はありません（頓服は薬タブから）。</p>`;
+  let totE=0,totT=0; const cells=[];
+  for(let i=6;i>=0;i--){ const dt=new Date(); dt.setDate(dt.getDate()-i); const ds=ymd(dt); let e=0,t=0;
+    scheduleForPatient(p,ds).forEach(({m,t:tt})=>{ e++; if(p.intakeLog[ds]&&p.intakeLog[ds][m.id+'@'+tt])t++; });
+    totE+=e; totT+=t; const cls=e===0?'':(t>=e?'full':(t>0?'part':''));
+    cells.push(`<div class="d ${cls}"><div>${['日','月','火','水','木','金','土'][dt.getDay()]}</div>
+      <div class="dv">${dt.getDate()}</div><div style="font-size:10px;color:var(--sub)">${e?t+'/'+e:'-'}</div></div>`); }
+  const rate=totE?Math.round(totT/totE*100):null;
+  b.innerHTML=`
+    <div class="card"><div class="chead"><div class="ic mint">✅</div><div class="ct">今日の服薬（${fmtDate(d)}）</div></div>
+      <p class="muted" style="margin-top:-4px">飲んだらタップ。残薬を登録した薬は自動で1減ります。</p>${todayHtml}</div>
+    <div class="card"><div class="chead"><div class="ic mint">📅</div><div class="ct">直近7日</div></div>
+      <div class="adh"><div><div class="num" style="color:${rate==null?'var(--sub)':rate>=80?'var(--mint-d)':rate>=50?'var(--amber)':'var(--pink-d)'}">${rate==null?'—':rate+'%'}</div>
+        <div class="muted">チェック率</div></div><div style="flex:1"><div class="cal">${cells.join('')}</div></div></div></div>`;
+}
+
+/* 健康 */
+function renderHealth(b){
+  const p=cur(); const hs=[...p.health].sort((a,c)=>c.date.localeCompare(a.date));
+  const body=hs.length? `<div class="card flat" style="padding:6px 12px"><table class="simple">
+    <tr><th>日付</th><th>血圧</th><th>体温</th><th>脈</th><th>SpO₂</th><th>メモ</th><th></th></tr>
+    ${hs.map(h=>`<tr><td>${fmtMd(h.date)}</td><td>${esc(h.bp||'')}</td><td>${esc(h.temp||'')}</td><td>${esc(h.pulse||'')}</td>
+      <td>${esc(h.spo2||'')}</td><td>${esc(h.note||'')}</td><td><button class="btn danger sm" onclick="delHealth('${h.id}')">×</button></td></tr>`).join('')}
+    </table></div>` : `<div class="empty"><div class="big">🩺</div><p class="muted">健康状態の記録がありません</p></div>`;
+  b.innerHTML=`<button class="btn block" onclick="openHealthModal()">＋ 健康状態を記録</button><div style="height:14px"></div>${body}`;
+}
+function delHealth(id){ if(!confirm('この記録を削除しますか？'))return; const p=cur(); p.health=p.health.filter(x=>x.id!==id); save(); renderCTab(); }
+
+/* 申し送り */
+function renderHandoff(b){
+  const p=cur(); const hs=[...p.handoffs].sort((a,c)=>(c.date+c.id).localeCompare(a.date+a.id));
+  const body=hs.length? hs.map(h=>`<div class="card flat ${h.important?'tint-pink':''}" style="padding:14px">
+    <div class="muted" style="display:flex;gap:6px;align-items:center;margin-bottom:4px">
+      ${h.important?'<span class="pill req">要確認</span>':''} 🕒 ${fmtDate(h.date)} ／ ${esc(h.author||'記入者未設定')}
+      <button class="btn danger sm" style="margin-left:auto" onclick="delHandoff('${h.id}')">削除</button></div>
+    <div style="white-space:pre-wrap">${esc(h.text)}</div></div>`).join('')
+    : `<div class="empty"><div class="big">📝</div><p class="muted">申し送りメモがありません</p></div>`;
+  b.innerHTML=`<button class="btn block" onclick="openHandoffModal()">＋ 申し送りを追加</button><div style="height:14px"></div>${body}`;
+}
+function delHandoff(id){ if(!confirm('この申し送りを削除しますか？'))return; const p=cur(); p.handoffs=p.handoffs.filter(x=>x.id!==id); save(); renderCTab(); }
+
+/* 資料（処方PDF紐付け） */
+function renderFiles(b){
+  const p=cur(); const fs=[...p.files].sort((a,c)=>(c.date+c.id).localeCompare(a.date+a.id));
+  const body=fs.length? fs.map(f=>`<div class="lrow">
+      <div class="ic blue">📄</div>
+      <div class="grow"><div class="t1">${esc(f.label||'資料')}</div><div class="t2">${fmtDate(f.date)} ／ ${esc(shortUrl(f.url))}</div></div>
+      <button class="btn ghost sm" onclick="openFileLink('${esc(f.url)}')">開く</button>
+      <button class="btn danger sm" onclick="delFile('${f.id}')">削除</button></div>`).join('')
+    : `<div class="empty"><div class="big">📎</div><p class="muted">処方箋・資料のリンクがありません</p></div>`;
+  b.innerHTML=`
+    <div class="card">
+      <div class="chead"><div class="ic blue">📷</div><div class="ct">処方箋・資料のPDFを紐付け</div></div>
+      <p class="muted" style="margin-top:-4px">手書きの処方箋は <b>Googleドライブでスキャン→PDF化</b> し、共有リンクをここに貼ると、いつでも開けます。</p>
+      <button class="btn block" onclick="openFileModal()">＋ PDF / リンクを追加</button>
+    </div>${body}`;
+}
+function shortUrl(u){ u=u||''; return u.replace(/^https?:\/\//,'').slice(0,40)+(u.length>47?'…':''); }
+function openFileLink(u){ if(!/^https?:\/\//.test(u)){ alert('リンクが正しくありません（https:// で始まるURLを登録してください）'); return; } window.open(u,'_blank','noopener'); }
+function delFile(id){ if(!confirm('このリンクを削除しますか？（元のPDFは消えません）'))return; const p=cur(); p.files=p.files.filter(x=>x.id!==id); save(); renderCTab(); }
+
+/* 説明シート */
+function renderSheet(b){
+  const p=cur(); const active=p.medications.filter(m=>m.active!==false); const stopped=p.medications.filter(m=>m.active===false);
+  const recentH=[...p.health].sort((a,c)=>c.date.localeCompare(a.date)).slice(0,5);
+  const impHO=p.handoffs.filter(h=>h.important);
+  const rows=ms=>ms.map(m=>`<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.dose||'')}</td><td>${(m.timing||[]).join('・')}</td>
+    <td>${m.start?fmtDate(m.start):''}</td><td>${esc(m.purpose||'')}</td><td>${esc(m.note||'')}</td></tr>`).join('')||`<tr><td colspan="6" style="color:#999">なし</td></tr>`;
+  b.innerHTML=`
+    <button class="btn block no-print" onclick="window.print()">🖨 印刷・PDF保存</button>
+    <p class="muted no-print" style="text-align:center">ご家族が受診時に医師へ渡せる1枚。印刷ダイアログで「PDFで保存」も選べます。</p>
+    <div class="sheet">
+      <h2 class="sh">おくすり・健康状態 説明シート</h2>
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap"><span class="muted">作成日：${fmtDate(today())}</span>
+        <span style="font-weight:800">${esc(p.name)} 様 <span class="muted">${esc(p.kana||'')}</span></span></div>
+      ${p.info?`<section><h3>基本情報</h3><div>${esc(p.info)}</div></section>`:''}
+      ${p.nextVisit?`<section><h3>次回の受診予定</h3><div>${fmtDate(p.nextVisit)}${p.nextVisitNote?'　'+esc(p.nextVisitNote):''}</div></section>`:''}
+      ${p.summary?`<section><h3>経過サマリー</h3><div style="white-space:pre-wrap">${esc(p.summary)}</div></section>`:''}
+      <section><h3>服用中の薬（${active.length}件）</h3>
+        <table><tr><th>薬の名前</th><th>用量</th><th>タイミング</th><th>いつから</th><th>目的</th><th>備考・注意</th></tr>${rows(active)}</table></section>
+      ${stopped.length?`<section><h3>休薬・中止中の薬</h3><table><tr><th>薬の名前</th><th>用量</th><th>タイミング</th><th>いつから</th><th>目的</th><th>備考</th></tr>${rows(stopped)}</table></section>`:''}
+      <section><h3>最近の健康状態</h3>${recentH.length?`<table><tr><th>日付</th><th>血圧</th><th>体温</th><th>脈</th><th>SpO₂</th><th>メモ</th></tr>
+        ${recentH.map(h=>`<tr><td>${fmtDate(h.date)}</td><td>${esc(h.bp||'')}</td><td>${esc(h.temp||'')}</td><td>${esc(h.pulse||'')}</td><td>${esc(h.spo2||'')}</td><td>${esc(h.note||'')}</td></tr>`).join('')}</table>`:'<div class="muted">記録なし</div>'}</section>
+      ${impHO.length?`<section><h3>医師・家族に伝えたいこと</h3><ul style="margin:0;padding-left:20px">${impHO.map(h=>`<li>${esc(h.text)}</li>`).join('')}</ul></section>`:''}
+      <div class="sig">このシートはご家族・施設での記録をもとに作成したものです。正確な診断・処方は医師の判断によります。／ ナースのドラッグ手帳</div>
+    </div>`;
+}
+
+/* ===== 処置・お願い ===== */
+function renderCare(b){
+  const p=cur();
+  const items=[...p.care].sort((a,c)=>careStatusRank(a.status)-careStatusRank(c.status)||(c.date+c.id).localeCompare(a.date+a.id));
+  const body=items.length? items.map(it=>`<div class="med ${it.status==='終了'?'stopped':''}">
+      <div style="display:flex;align-items:flex-start;gap:8px">
+        <span class="mname">${esc(it.title)}</span>
+        <span class="pill ${it.status==='継続'?'on':it.status==='新規'?'req':'off'}" style="margin-left:auto">${it.status==='継続'?'🔁 ':it.status==='新規'?'🆕 ':''}${esc(it.status||'')}</span>
+      </div>
+      ${it.detail?`<div class="mnote">${esc(it.detail)}</div>`:''}
+      <div class="cfoot">🕒 ${fmtDate(it.date)}
+        <span style="margin-left:auto;display:flex;gap:6px">
+          <button class="btn ghost sm" onclick="openCareModal('${it.id}')">編集</button>
+          <button class="btn danger sm" onclick="delCare('${it.id}')">削除</button></span></div>
+    </div>`).join('')
+    : `<div class="empty"><div class="big">🩹</div><p class="muted">処置・お願い事項はありません</p></div>`;
+  b.innerHTML=`<button class="btn block" onclick="openCareModal()">＋ 処置・お願いを追加</button>
+    <p class="muted" style="margin:8px 3px">軟膏処置の追加・処置や薬の継続など。「継続」「新規」はホームの「今日の処置・お願い」上部に出ます。</p>${body}`;
+}
+let careStatus='新規';
+function openCareModal(id){
+  const it=id?cur().care.find(x=>x.id===id):null; careStatus=it?it.status:'新規';
+  openModal(`<h3>${it?'処置・お願いの編集':'処置・お願いを追加'}</h3>
+    <div class="field"><label>内容（タイトル）*</label><input id="f_ctitle" value="${esc(it?.title||'')}" placeholder="例：軟膏処置（右下腿）"></div>
+    <div class="field"><label>状態</label><div class="chipwrap" id="careChips">
+      ${['継続','新規','終了'].map(o=>`<button type="button" class="chip ${careStatus===o?'sel':''}" onclick="setCareStatus('${o}')">${o}</button>`).join('')}</div></div>
+    <div class="field"><label>お願いしたいこと・詳細</label><textarea id="f_cdetail" placeholder="例：朝の処置後に軟膏塗布。継続でお願いします。">${esc(it?.detail||'')}</textarea></div>
+    <div class="field"><label>日付</label><input id="f_cdate" type="date" value="${it?.date||today()}"></div>
+    <div class="foot"><button class="btn subtle block" onclick="closeModal()">キャンセル</button>
+      <button class="btn block" onclick="saveCare('${id||''}')">保存</button></div>`);
+  setTimeout(()=>document.getElementById('f_ctitle').focus(),50);
+}
+function setCareStatus(s){ careStatus=s; document.querySelectorAll('#careChips .chip').forEach(c=>c.classList.toggle('sel',c.textContent===s)); }
+function saveCare(id){ const title=val('f_ctitle'); if(!title){alert('内容を入力してください');return;} const p=cur();
+  const data={title,detail:val('f_cdetail'),status:careStatus,date:val('f_cdate')||today()};
+  if(id)Object.assign(p.care.find(x=>x.id===id),data); else p.care.push({id:uid(),...data});
+  save(); closeModal(); render(); }
+function delCare(id){ if(!confirm('削除しますか？'))return; const p=cur(); p.care=p.care.filter(x=>x.id!==id); save(); renderCTab(); }
+
+/* ===== 経過・緊急時サマリー ===== */
+function renderSummary(b){
+  const p=cur();
+  const logs=[...p.log].sort((a,c)=>(c.date+c.id).localeCompare(a.date+a.id));
+  const logBody=logs.length? logs.map(l=>`<div class="card flat ${l.important?'tint-pink':''}" style="padding:13px">
+      <div class="muted" style="display:flex;gap:6px;align-items:center;margin-bottom:3px">
+        ${l.important?'<span class="pill req">重要</span>':''}<span class="tag t">${esc(l.source||'LINE')}</span> ${fmtDate(l.date)}
+        <span style="margin-left:auto;display:flex;gap:6px">
+          <button class="btn ghost sm" onclick="openLogModal('${l.id}')">編集</button>
+          <button class="btn danger sm" onclick="delLog('${l.id}')">削除</button></span></div>
+      <div style="white-space:pre-wrap">${esc(l.text)}</div></div>`).join('')
+    : `<div class="empty"><div class="big">💬</div><p class="muted">まだ経過の記録がありません。<br>普段のLINEで共有した重要な内容をコピーして<br>追加していきましょう。</p></div>`;
+  b.innerHTML=`
+    <div class="card tint-pink">
+      <div class="chead"><div class="ic pink">🚑</div><div class="ct">緊急時サマリー</div>
+        <div class="cact"><button class="iconbtn" onclick="openSummaryModal()">✎</button></div></div>
+      <p class="muted" style="margin-top:-4px">急な受診・引き継ぎでも、ここを見れば状況が伝わるように。</p>
+      <div style="white-space:pre-wrap${p.summary?'':';color:var(--sub)'}">${p.summary?esc(p.summary):'まだ書かれていません。下の「🪄 下書きを作成」か ✎ で記入できます。'}</div>
+      <button class="btn block" style="margin-top:12px" onclick="draftSummary()">🪄 経過・基本情報から下書きを作成</button>
+    </div>
+    <div class="chead" style="margin:6px 3px 8px"><div class="ic mint">💬</div><div class="ct">経過メモ（LINEからの共有など）</div></div>
+    <button class="btn pink block" onclick="openLogModal()">＋ 経過を追加（LINEをコピペ）</button>
+    <div style="height:12px"></div>${logBody}`;
+}
+function openSummaryModal(){ const p=cur();
+  openModal(`<h3>緊急時サマリーの編集</h3>
+    <div class="field"><label>急な受診・引き継ぎでも状況が伝わる要点</label>
+      <textarea id="f_summary" style="min-height:210px" placeholder="例）90歳女性。アルツハイマー型認知症・慢性心不全。直近2週間で食欲低下、夜間不穏あり。むくみ増加傾向で利尿剤調整中。キーパーソン：長女（℡ 090-...）。">${esc(p.summary||'')}</textarea></div>
+    <div class="foot"><button class="btn subtle block" onclick="closeModal()">キャンセル</button>
+      <button class="btn block" onclick="saveSummary()">保存</button></div>`);
+  setTimeout(()=>document.getElementById('f_summary').focus(),50); }
+function saveSummary(){ cur().summary=val('f_summary'); save(); closeModal(); render(); }
+function draftSummary(){
+  const p=cur(); const L=[];
+  if(p.info)L.push('■ 基本情報：'+p.info);
+  const meds=p.medications.filter(m=>m.active!==false);
+  if(meds.length)L.push('■ 服用中の薬：'+meds.map(m=>m.name+(m.dose?'('+m.dose+')':'')).join('、'));
+  const care=p.care.filter(c=>c.status!=='終了');
+  if(care.length)L.push('■ 処置・継続：'+care.map(c=>c.title).join('、'));
+  const recent=[...p.log].sort((a,c)=>(c.date+c.id).localeCompare(a.date+a.id)).slice(0,5);
+  if(recent.length)L.push('■ 最近の経過：\n'+recent.map(l=>'・'+fmtDate(l.date)+' '+l.text.replace(/\n/g,' ')).join('\n'));
+  const imp=p.handoffs.filter(h=>h.important);
+  if(imp.length)L.push('■ 要確認：'+imp.map(h=>h.text).join(' ／ '));
+  const h=[...p.health].sort((a,c)=>c.date.localeCompare(a.date))[0];
+  if(h)L.push('■ 直近バイタル('+fmtDate(h.date)+')：'+[h.bp&&'BP '+h.bp,h.temp&&'BT '+h.temp,h.pulse&&'P '+h.pulse,h.spo2&&'SpO2 '+h.spo2].filter(Boolean).join(' / '));
+  const draft=L.join('\n');
+  if(!draft){ alert('下書きの材料がまだありません。薬・経過・申し送り・健康状態などを登録してください。'); return; }
+  if(p.summary && !confirm('現在のサマリーを下書きで置き換えますか？（今の内容は消えます）'))return;
+  p.summary=draft; save(); render();
+}
+let logSource='LINE';
+function openLogModal(id){ const l=id?cur().log.find(x=>x.id===id):null; logSource=l?l.source||'LINE':'LINE';
+  openModal(`<h3>${l?'経過の編集':'経過を追加'}</h3>
+    <p class="muted">LINEで共有した重要な内容を、そのままコピーして貼り付けられます。</p>
+    <div class="field"><label>内容 *</label><textarea id="f_ltext" style="min-height:130px" placeholder="例）本日夕方 37.8℃の発熱。咳あり。水分は摂れている。家族へ連絡済み。">${esc(l?.text||'')}</textarea></div>
+    <div class="field"><label>情報源</label><div class="chipwrap" id="logChips">
+      ${['LINE','電話','観察','家族','その他'].map(s=>`<button type="button" class="chip ${logSource===s?'sel':''}" onclick="setLogSource('${s}')">${s}</button>`).join('')}</div></div>
+    <div class="field"><label>日付</label><input id="f_ldate" type="date" value="${l?.date||today()}"></div>
+    <div class="field"><label><input type="checkbox" id="f_limp" ${l?.important?'checked':''} style="width:auto;margin-right:6px">⭐ 重要（緊急時サマリーで優先）</label></div>
+    <div class="foot"><button class="btn subtle block" onclick="closeModal()">キャンセル</button>
+      <button class="btn block" onclick="saveLog('${id||''}')">保存</button></div>`);
+  setTimeout(()=>document.getElementById('f_ltext').focus(),50); }
+function setLogSource(s){ logSource=s; document.querySelectorAll('#logChips .chip').forEach(c=>c.classList.toggle('sel',c.textContent===s)); }
+function saveLog(id){ const text=val('f_ltext'); if(!text){alert('内容を入力してください');return;} const p=cur();
+  const data={text,source:logSource,date:val('f_ldate')||today(),important:document.getElementById('f_limp').checked};
+  if(id)Object.assign(p.log.find(x=>x.id===id),data); else p.log.push({id:uid(),...data});
+  save(); closeModal(); render(); }
+function delLog(id){ if(!confirm('削除しますか？'))return; const p=cur(); p.log=p.log.filter(x=>x.id!==id); save(); renderCTab(); }
+
+/* ===== 共有ノート（掲示板） ===== */
+function renderNotes(c){
+  const posts=db.board.filter(b=>b.type===boardTab).sort((a,d)=>(d.pinned?1:0)-(a.pinned?1:0)||(d.date+d.id).localeCompare(a.date+a.id));
+  const tb=(k,l)=>`<button class="tab ${boardTab===k?'active':''}" onclick="boardTab='${k}';render()">${l}</button>`;
+  const list=posts.length? posts.map(b=>`<div class="card flat ${b.pinned?'tint-amber':''}" style="padding:14px">
+    <div class="muted" style="display:flex;gap:6px;align-items:center;margin-bottom:3px">
+      ${b.pinned?'📌 ':''}<span class="tag t">${esc(b.cat||'')}</span> ${fmtDate(b.date)} ／ ${esc(b.author||'')}
+      <span style="margin-left:auto;display:flex;gap:6px">
+        <button class="btn ghost sm" onclick="openPostModal('${b.id}')">編集</button>
+        <button class="btn danger sm" onclick="delPost('${b.id}')">削除</button></span></div>
+    <div style="font-weight:800;font-size:16px;margin:2px 0 4px">${esc(b.title)}</div>
+    <div style="white-space:pre-wrap">${linkify(b.body)}</div></div>`).join('')
+    : `<div class="empty"><div class="big">${boardTab==='topic'?'📝':'🤖'}</div><p class="muted">まだ投稿がありません</p></div>`;
+  c.innerHTML=`<div class="chead" style="margin:2px 2px 10px"><div class="ic pink">📝</div><div class="ct">共有ノート</div></div>
+    <p class="muted" style="margin:-6px 2px 8px">看護チーム内のトピックス・お役立ち情報。バックアップで他端末にも渡せます。</p>
+    <div class="tabs">${tb('topic','📝 トピックス')}${tb('tips','🤖 お役立ち')}</div>
+    <button class="btn pink block" onclick="openPostModal()">＋ 新規投稿</button><div style="height:14px"></div>${list}`;
+}
+function linkify(s){ return esc(s).replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener" style="color:var(--blue)">$1</a>'); }
+function openPostModal(id){
+  const b=id?db.board.find(x=>x.id===id):null; const type=b?b.type:boardTab; const cats=BOARD_CATS[type];
+  const ph=type==='topic'?'例：今週のナース事変 〜夜勤の申し送り編〜':'例：ChatGPTで申し送りを要約するコツ';
+  openModal(`<h3>${b?'投稿の編集':'新しい投稿'}（${type==='topic'?'トピックス':'お役立ち'}）</h3>
+    <div class="field"><label>カテゴリ</label><select id="f_pcat">${cats.map(x=>`<option ${b&&b.cat===x?'selected':''}>${x}</option>`).join('')}</select></div>
+    <div class="field"><label>タイトル *</label><input id="f_ptitle" value="${esc(b?.title||'')}" placeholder="${ph}"></div>
+    <div class="field"><label>本文</label><textarea id="f_pbody" style="min-height:150px" placeholder="内容を書いてください。記事URLを貼ってもOK。">${esc(b?.body||'')}</textarea></div>
+    <div class="row"><div class="field"><label>投稿者</label><input id="f_pauthor" value="${esc(b?.author||'')}" placeholder="例：ひかる"></div>
+      <div class="field"><label>日付</label><input id="f_pdate" type="date" value="${b?.date||today()}"></div></div>
+    <div class="field"><label><input type="checkbox" id="f_ppin" ${b?.pinned?'checked':''} style="width:auto;margin-right:6px">📌 上部に固定</label></div>
+    <div class="foot"><button class="btn subtle block" onclick="closeModal()">キャンセル</button>
+      <button class="btn block" onclick="savePost('${id||''}','${type}')">保存</button></div>`);
+  setTimeout(()=>document.getElementById('f_ptitle').focus(),50);
+}
+function savePost(id,type){ const title=val('f_ptitle'); if(!title){alert('タイトルを入力してください');return;}
+  const data={type,cat:val('f_pcat'),title,body:val('f_pbody'),author:val('f_pauthor'),date:val('f_pdate')||today(),pinned:document.getElementById('f_ppin').checked};
+  if(id)Object.assign(db.board.find(x=>x.id===id),data); else db.board.push({id:uid(),...data});
+  save(); closeModal(); render();
+}
+function delPost(id){ if(!confirm('この投稿を削除しますか？'))return; db.board=db.board.filter(x=>x.id!==id); save(); render(); }
+
+/* ===== お知らせ ===== */
+function renderNotify(c){
+  const d=today(); const items=[];
+  db.patients.forEach(p=>p.medications.forEach(m=>{ if(m.active!==false&&m.stock!=null&&m.stock!==''&&Number(m.stock)<=(Number(m.stockAlert)||7))
+    items.push({ic:'pink',emo:'💊',t1:`${m.name}（${p.name}）`,t2:`残り ${m.stock}回分 — 補充をおすすめします`,pid:p.id}); }));
+  db.patients.filter(p=>p.nextVisit).forEach(p=>{ const dd=daysBetween(d,p.nextVisit);
+    if(dd>=-1&&dd<=14)items.push({ic:'blue',emo:'🏥',t1:`受診予定：${p.name}`,t2:`${fmtDate(p.nextVisit)}（${dd<0?'過ぎ':dd===0?'今日':'あと'+dd+'日'}）`,pid:p.id}); });
+  db.patients.forEach(p=>p.handoffs.filter(h=>h.important).forEach(h=>items.push({ic:'amber',emo:'⚠️',t1:`要確認：${p.name}`,t2:h.text,pid:p.id})));
+  db.board.filter(b=>b.pinned).forEach(b=>items.push({ic:'mint',emo:'📌',t1:b.title,t2:'共有ノート（'+(b.cat||'')+'）',note:true}));
+  c.innerHTML=`<div class="chead" style="margin:2px 2px 12px"><div class="ic amber">🔔</div><div class="ct">お知らせ</div></div>`
+    + (items.length? items.map(it=>`<div class="lrow" ${it.pid?`onclick="openPatient('${it.pid}')"`:it.note?`onclick="setView('notes')"`:''}>
+        <div class="ic ${it.ic}">${it.emo}</div><div class="grow"><div class="t1">${esc(it.t1)}</div><div class="t2">${esc(it.t2)}</div></div></div>`).join('')
+      : `<div class="empty"><div class="big">🎉</div><p class="muted">今は対応が必要なお知らせはありません。</p></div>`);
+}
+
+/* ===== カレンダー予定表 ===== */
+function eventsOn(ds){
+  const out=[];
+  db.patients.forEach(p=>{ if(p.nextVisit===ds)out.push({icon:'🏥',cls:'blue',label:'受診：'+p.name+(p.nextVisitNote?'（'+p.nextVisitNote+'）':''),pid:p.id}); });
+  db.patients.forEach(p=>(p.care||[]).forEach(it=>{ if(it.date===ds&&it.status!=='終了')out.push({icon:'🩹',cls:'mint',label:it.title+'（'+p.name+'）',pid:p.id}); }));
+  (db.events||[]).forEach(ev=>{ if(ev.date===ds){ const p=db.patients.find(x=>x.id===ev.pid); out.push({icon:'📌',cls:'amber',label:ev.title+(p?'（'+p.name+'）':''),pid:ev.pid,evid:ev.id}); } });
+  return out;
+}
+function renderCalendar(c){
+  const y=calRef.getFullYear(), mo=calRef.getMonth();
+  const startDow=new Date(y,mo,1).getDay(), days=new Date(y,mo+1,0).getDate(), tdy=today();
+  let cells='';
+  for(let i=0;i<startDow;i++)cells+=`<div class="cd empty"></div>`;
+  for(let dn=1;dn<=days;dn++){
+    const ds=`${y}-${String(mo+1).padStart(2,'0')}-${String(dn).padStart(2,'0')}`;
+    const dots=[...new Set(eventsOn(ds).map(e=>e.icon))].slice(0,3).join('');
+    cells+=`<div class="cd ${ds===calSel?'sel':''} ${ds===tdy?'today':''}" onclick="calSel='${ds}';render()">
+      <div class="cdn">${dn}</div><div class="cdd">${dots}</div></div>`;
+  }
+  const evs=eventsOn(calSel);
+  const selList=evs.length? evs.map(e=>`<div class="lrow" ${e.pid?`onclick="openPatient('${e.pid}')"`:''}>
+      <div class="ic ${e.cls}">${e.icon}</div><div class="grow"><div class="t1">${esc(e.label)}</div></div>
+      ${e.evid?`<button class="btn danger sm" onclick="event.stopPropagation();openEventModal('${calSel}','${e.evid}')">編集</button>`:''}</div>`).join('')
+    : `<div class="muted" style="padding:8px 2px">予定はありません</div>`;
+  c.innerHTML=`
+    <div class="chead" style="margin:2px 2px 10px"><div class="ic blue">📅</div><div class="ct">予定表</div></div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:10px">
+        <button class="iconbtn" onclick="calRef=new Date(${y},${mo-1},1);render()">‹</button>
+        <div style="font-weight:800;font-size:17px">${y}年 ${mo+1}月</div>
+        <button class="iconbtn" onclick="calRef=new Date(${y},${mo+1},1);render()">›</button>
+      </div>
+      <div class="calgrid head">${['日','月','火','水','木','金','土'].map(w=>`<div class="cw">${w}</div>`).join('')}</div>
+      <div class="calgrid">${cells}</div>
+      <div class="muted" style="margin-top:8px;text-align:center">🏥 受診　🩹 処置・ケア　📌 その他の予定</div>
+    </div>
+    <div class="card">
+      <div class="chead"><div class="ic mint">🗓</div><div class="ct">${fmtDate(calSel)}</div>
+        <div class="cact"><button class="btn sm" onclick="openEventModal('${calSel}')">＋ 予定</button></div></div>
+      ${selList}
+    </div>`;
+}
+function openEventModal(ds,id){
+  const ev=id?(db.events||[]).find(x=>x.id===id):null;
+  const opts=['<option value="">（利用者なし）</option>'].concat(db.patients.map(p=>`<option value="${p.id}" ${ev&&ev.pid===p.id?'selected':''}>${esc(p.name)}</option>`)).join('');
+  openModal(`<h3>${ev?'予定の編集':'予定を追加'}</h3>
+    <div class="field"><label>予定の内容 *</label><input id="f_evtitle" value="${esc(ev?.title||'')}" placeholder="例：家族面談 / 入浴 / 受診付き添い"></div>
+    <div class="field"><label>日付</label><input id="f_evdate" type="date" value="${ev?ev.date:(ds||today())}"></div>
+    <div class="field"><label>関係する利用者（任意）</label><select id="f_evpid">${opts}</select></div>
+    <div class="foot">${ev?`<button class="btn danger" onclick="delEvent('${ev.id}')">削除</button>`:''}
+      <button class="btn subtle block" onclick="closeModal()">キャンセル</button>
+      <button class="btn block" onclick="saveEvent('${id||''}')">保存</button></div>`);
+  setTimeout(()=>document.getElementById('f_evtitle').focus(),50);
+}
+function saveEvent(id){ const title=val('f_evtitle'); if(!title){alert('内容を入力してください');return;}
+  const data={title,date:val('f_evdate')||today(),pid:document.getElementById('f_evpid').value||null};
+  db.events=db.events||[];
+  if(id)Object.assign(db.events.find(x=>x.id===id),data); else db.events.push({id:uid(),...data});
+  calSel=data.date; save(); closeModal(); render(); }
+function delEvent(id){ if(!confirm('この予定を削除しますか？'))return; db.events=(db.events||[]).filter(x=>x.id!==id); save(); closeModal(); render(); }
+
+/* ===== その他 ===== */
+function renderMore(c){
+  c.innerHTML=`<div class="chead" style="margin:2px 2px 12px"><div class="ic mint">☰</div><div class="ct">その他</div></div>
+    <div class="lrow" onclick="openGuide()"><div class="ic mint">📖</div><div class="grow"><div class="t1">使い方ガイド</div><div class="t2">各画面のかんたん説明</div></div><span style="color:var(--sub)">›</span></div>
+    <div class="lrow" onclick="openDrugSearch()"><div class="ic mint">🔎</div><div class="grow"><div class="t1">薬を調べる</div><div class="t2">効能・副作用・注意（約50種）</div></div><span style="color:var(--sub)">›</span></div>
+    <div class="lrow" onclick="openTeamModal()"><div class="ic pink">👥</div><div class="grow"><div class="t1">チームメンバー</div><div class="t2">ホームのアバターに表示</div></div><span style="color:var(--sub)">›</span></div>
+    <div class="lrow" onclick="setView('notify')"><div class="ic amber">🔔</div><div class="grow"><div class="t1">お知らせ</div><div class="t2">残薬・受診・要確認のまとめ</div></div><span style="color:var(--sub)">›</span></div>
+    <div class="lrow" onclick="openBackup()"><div class="ic blue">⤓</div><div class="grow"><div class="t1">バックアップ・共有</div><div class="t2">書き出し／追加・上書き読み込み</div></div><span style="color:var(--sub)">›</span></div>
+    <div class="card" style="margin-top:8px">
+      <div class="chead"><div class="ic amber">🛟</div><div class="ct">このアプリについて</div></div>
+      <p class="muted">データはこの端末の中だけに保存され、外部には送信されません。看護チーム内だけで共有され、患者様のプライバシーは外部に公開されません。
+      共有端末には画面ロックを。記録の補助ツールであり、診断・処方の判断は必ず医師・薬剤師に確認してください。</p>
+    </div>`;
+}
+
+function openGuide(){
+  const g=(emo,t,body)=>`<div style="margin-bottom:14px"><div style="font-weight:800;font-size:15px;margin-bottom:3px">${emo} ${t}</div><div class="muted" style="line-height:1.85">${body}</div></div>`;
+  openModal(`<h3>📖 使い方ガイド</h3>
+    <div class="infobox" style="margin-top:0">施設のカルテだけでは利用者さんの「今の処置」や「経過」が把握しきれません。<b>急な受診や引き継ぎでも担当が困らないよう</b>、看護チームだけで情報を一か所にまとめるアプリです。データはこの端末内だけに保存され、外部には送信されません。</div>
+    <div style="margin-top:14px">
+    ${g('🏠','ホーム','上から大事な順に表示。緊急時サマリー／今日の処置・お願い／残薬がすくない薬／もうすぐ受診／重要な申し送り を一目で確認できます。')}
+    ${g('🚑','緊急時サマリー（いちばんの要）','カルテを開くと最初に出ます。普段LINEで共有した大事な内容を<b>「経過メモ」にコピペ</b>。「🪄下書きを作成」で薬や経過からサマリーのたたき台が作れます。')}
+    ${g('📒','カルテ・施設の色分け','利用者ごとに薬・健康・処置・申し送り・資料をまとめます。利用者には<b>施設（頚城／仲町／すみのや）を複数</b>つけられ、色で区別。一覧上のボタンで施設ごとに絞り込めます。')}
+    ${g('💊','薬','名前・用量・タイミング・「いつから」・残りの量を登録。🔍で効能・副作用を確認。残量が少なくなるとホームでお知らせします。')}
+    ${g('🩹','処置・お願い','軟膏処置などを「継続／新規／終了」で記録。継続・新規はホーム上部にまとまって出ます。')}
+    ${g('📅','予定表','受診・処置・その他の予定をカレンダー表示。日付タップでその日の予定を確認、自由に予定を追加できます。')}
+    ${g('🖨','説明シート','入力した情報から、医師やご家族に渡せる1枚を自動作成。印刷・PDF保存もできます。')}
+    ${g('⤓','バックアップ・共有','「その他 → バックアップ・共有」でデータをJSONに書き出し／読み込み。他の端末と受け渡すときに使います。')}
+    </div>
+    <div class="foot"><button class="btn block" onclick="closeModal()">とじる</button></div>`);
+}
+
+/* ===== モーダル共通 ===== */
+function openModal(html){ document.getElementById('modalRoot').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal">${html}</div></div>`; }
+function closeModal(){ document.getElementById('modalRoot').innerHTML=''; }
+
+/* 利用者 */
+function togglePFac(el,name){ const f=facMeta(name);
+  if(pFacs.includes(name)){pFacs=pFacs.filter(x=>x!==name);el.classList.remove('sel');el.style.cssText='';}
+  else{pFacs.push(name);el.classList.add('sel');if(f)el.style.cssText=`background:${f.color};border-color:${f.color};color:#fff`;} }
+function openPatientModal(id){
+  const p=id?db.patients.find(x=>x.id===id):null;
+  pFacs=p?[...(p.facilities||[])]:[];
+  openModal(`<h3>${p?'利用者の編集':'利用者を追加'}</h3>
+    <div class="field"><label>お名前 *</label><input id="f_name" value="${esc(p?.name||'')}" placeholder="例：山田 太郎"></div>
+    <div class="field"><label>ふりがな</label><input id="f_kana" value="${esc(p?.kana||'')}" placeholder="やまだ たろう"></div>
+    <div class="field"><label>施設（複数選べます）</label><div class="chipwrap">
+      ${FACILITIES.map(f=>`<button type="button" class="chip ${pFacs.includes(f.name)?'sel':''}" style="${pFacs.includes(f.name)?`background:${f.color};border-color:${f.color};color:#fff`:''}" onclick="togglePFac(this,'${f.name}')">${f.name}</button>`).join('')}</div></div>
+    <div class="field"><label>基本情報（年齢・主病名・アレルギーなど）</label><textarea id="f_info" placeholder="例：80歳 / 高血圧・糖尿病 / ペニシリンアレルギー">${esc(p?.info||'')}</textarea></div>
+    <div class="row"><div class="field"><label>次回の受診予定</label><input id="f_nv" type="date" value="${esc(p?.nextVisit||'')}"></div>
+      <div class="field"><label>受診メモ</label><input id="f_nvn" value="${esc(p?.nextVisitNote||'')}" placeholder="例：内科 10:00"></div></div>
+    <div class="foot">${p?`<button class="btn danger" onclick="delPatient('${p.id}')">削除</button>`:''}
+      <button class="btn subtle block" onclick="closeModal()">キャンセル</button>
+      <button class="btn block" onclick="savePatient('${id||''}')">保存</button></div>`);
+  setTimeout(()=>document.getElementById('f_name').focus(),50);
+}
+function savePatient(id){ const name=val('f_name'); if(!name){alert('お名前を入力してください');return;}
+  if(id){ const p=db.patients.find(x=>x.id===id); p.name=name; p.kana=val('f_kana'); p.info=val('f_info'); p.nextVisit=val('f_nv'); p.nextVisitNote=val('f_nvn'); p.facilities=[...pFacs]; }
+  else{ const np={id:uid(),name,kana:val('f_kana'),info:val('f_info'),facilities:[...pFacs],nextVisit:val('f_nv'),nextVisitNote:val('f_nvn'),medications:[],health:[],handoffs:[],files:[],care:[],log:[],summary:'',intakeLog:{}}; db.patients.push(np); currentId=np.id; }
+  save(); closeModal(); render();
+}
+function delPatient(id){ if(!confirm('この利用者の薬・記録・申し送り・資料リンクをすべて削除します。よろしいですか？'))return;
+  db.patients=db.patients.filter(x=>x.id!==id); if(currentId===id)currentId=null; save(); closeModal(); render(); }
+
+/* 薬 */
+let medTiming=[];
+function openMedModal(id){
+  const m=id?cur().medications.find(x=>x.id===id):null; medTiming=m?[...(m.timing||[])]:['朝'];
+  openModal(`<h3>${m?'薬の編集':'薬を追加'}</h3>
+    <div class="field"><label>薬の名前 *</label>
+      <div style="display:flex;gap:8px"><input id="f_mname" value="${esc(m?.name||'')}" placeholder="例：アムロジピン" oninput="autoSuggest()">
+        <button class="btn ghost sm" type="button" onclick="lookupForMed()" style="flex-shrink:0">🔍</button></div><div id="suggest"></div></div>
+    <div class="field"><label>用量</label><input id="f_mdose" value="${esc(m?.dose||'')}" placeholder="例：5mg 1錠"></div>
+    <div class="field"><label>飲むタイミング</label><div class="chipwrap" id="timingChips">
+      ${TIMINGS.map(t=>`<button type="button" class="chip ${medTiming.includes(t)?'sel':''}" onclick="toggleTiming(this,'${t}')">${TIMING_ICON[t]||''}${t}</button>`).join('')}</div></div>
+    <div class="row"><div class="field"><label>いつから（開始日）</label><input id="f_mstart" type="date" value="${esc(m?.start||'')}"></div>
+      <div class="field"><label>終了予定日</label><input id="f_mend" type="date" value="${esc(m?.end||'')}"></div></div>
+    <div class="row"><div class="field"><label>残薬数（任意・回分）</label><input id="f_mstock" type="number" value="${esc(m?.stock!=null?String(m.stock):'')}" placeholder="例：30"></div>
+      <div class="field"><label>補充アラート(以下で警告)</label><input id="f_malert" type="number" value="${esc(m?.stockAlert!=null?String(m.stockAlert):'7')}" placeholder="7"></div></div>
+    <div class="field"><label>目的・何のための薬か</label><input id="f_mpurpose" value="${esc(m?.purpose||'')}" placeholder="例：血圧を下げる"></div>
+    <div class="field"><label>備考・注意</label><textarea id="f_mnote" placeholder="例：朝食後に。グレープフルーツ禁止。">${esc(m?.note||'')}</textarea></div>
+    <div class="foot"><button class="btn subtle block" onclick="closeModal()">キャンセル</button>
+      <button class="btn block" onclick="saveMed('${id||''}')">保存</button></div>`);
+  setTimeout(()=>document.getElementById('f_mname').focus(),50);
+}
+function toggleTiming(el,t){ if(medTiming.includes(t)){medTiming=medTiming.filter(x=>x!==t);el.classList.remove('sel');}else{medTiming.push(t);el.classList.add('sel');} }
+function findDrug(q){ q=(q||'').trim().toLowerCase(); if(!q)return null;
+  return DRUG_DB.find(d=>d.n.toLowerCase()===q||(d.a||[]).some(a=>a.toLowerCase()===q))||DRUG_DB.find(d=>d.n.toLowerCase().includes(q)||(d.a||[]).some(a=>a.toLowerCase().includes(q))); }
+function autoSuggest(){ const q=val('f_mname'); const box=document.getElementById('suggest'); if(!box)return; if(!q){box.innerHTML='';return;}
+  const hits=DRUG_DB.filter(d=>d.n.includes(q)||(d.a||[]).some(a=>a.includes(q))).slice(0,4);
+  box.innerHTML=hits.length?`<div style="margin-top:6px" class="chipwrap">${hits.map(d=>`<button type="button" class="chip" onclick="pickDrug('${esc(d.n)}')">${esc(d.n)}</button>`).join('')}</div>`:''; }
+function pickDrug(n){ document.getElementById('f_mname').value=n; document.getElementById('suggest').innerHTML=''; lookupForMed(); }
+function lookupForMed(){ const q=val('f_mname'); const d=findDrug(q); const box=document.getElementById('suggest');
+  if(!d){ box.innerHTML=`<div class="infobox">「${esc(q)}」は内蔵リストにありません。<a href="https://www.google.com/search?q=${encodeURIComponent(q+' 効能 副作用 添付文書')}" target="_blank" rel="noopener">🔎 ネットで調べる</a></div>`; return; }
+  box.innerHTML=`<div class="infobox"><b>${esc(d.n)}</b>（${esc(d.c)}）<br><b>効能：</b>${esc(d.e)}<br><b>副作用：</b>${esc(d.s)}<br><b>注意：</b>${esc(d.w)}
+    <div style="margin-top:8px"><button class="btn ghost sm" type="button" onclick="applyDrug('${esc(d.n)}')">目的・備考に反映</button></div></div>`; }
+function applyDrug(n){ const d=findDrug(n); if(!d)return; const pe=document.getElementById('f_mpurpose'); if(pe&&!pe.value)pe.value=d.e;
+  const ne=document.getElementById('f_mnote'); if(ne){ const add=`【副作用】${d.s}\n【注意】${d.w}`; ne.value=ne.value?ne.value+'\n'+add:add; } }
+function saveMed(id){ const name=val('f_mname'); if(!name){alert('薬の名前を入力してください');return;} const p=cur(); const sr=val('f_mstock');
+  const data={name,dose:val('f_mdose'),timing:[...medTiming],purpose:val('f_mpurpose'),note:val('f_mnote'),start:val('f_mstart'),end:val('f_mend'),
+    stock:sr===''?null:parseInt(sr,10),stockAlert:val('f_malert')===''?7:parseInt(val('f_malert'),10)};
+  if(id)Object.assign(p.medications.find(x=>x.id===id),data); else p.medications.push({id:uid(),active:true,...data});
+  save(); closeModal(); render(); }
+
+/* 健康 */
+function openHealthModal(){ openModal(`<h3>健康状態の記録</h3>
+  <div class="field"><label>日付</label><input id="f_hdate" type="date" value="${today()}"></div>
+  <div class="row"><div class="field"><label>血圧</label><input id="f_bp" placeholder="120/80"></div><div class="field"><label>体温</label><input id="f_temp" placeholder="36.5"></div></div>
+  <div class="row"><div class="field"><label>脈拍</label><input id="f_pulse" placeholder="72"></div><div class="field"><label>SpO₂</label><input id="f_spo2" placeholder="98"></div></div>
+  <div class="field"><label>症状・メモ</label><textarea id="f_hnote" placeholder="例：食欲あり。むくみ少し。"></textarea></div>
+  <div class="foot"><button class="btn subtle block" onclick="closeModal()">キャンセル</button><button class="btn block" onclick="saveHealth()">保存</button></div>`); }
+function saveHealth(){ const p=cur(); p.health.push({id:uid(),date:val('f_hdate')||today(),bp:val('f_bp'),temp:val('f_temp'),pulse:val('f_pulse'),spo2:val('f_spo2'),note:val('f_hnote')}); save(); closeModal(); render(); }
+
+/* 申し送り */
+function openHandoffModal(){ openModal(`<h3>申し送りメモ</h3>
+  <div class="row"><div class="field"><label>日付</label><input id="f_odate" type="date" value="${today()}"></div><div class="field"><label>記入者</label><input id="f_oauthor" placeholder="例：田中（日勤）"></div></div>
+  <div class="field"><label>内容 *</label><textarea id="f_otext" placeholder="例：夕食後の薬を拒否。翌朝に確認を。"></textarea></div>
+  <div class="field"><label><input type="checkbox" id="f_oimp" style="width:auto;margin-right:6px">⚠️ 要確認（ホーム・お知らせ・説明シートにも表示）</label></div>
+  <div class="foot"><button class="btn subtle block" onclick="closeModal()">キャンセル</button><button class="btn block" onclick="saveHandoff()">保存</button></div>`);
+  setTimeout(()=>document.getElementById('f_otext').focus(),50); }
+function saveHandoff(){ const text=val('f_otext'); if(!text){alert('内容を入力してください');return;} const p=cur();
+  p.handoffs.push({id:uid(),date:val('f_odate')||today(),author:val('f_oauthor'),text,important:document.getElementById('f_oimp').checked}); save(); closeModal(); render(); }
+
+/* 資料（PDF/リンク） */
+function openFileModal(){ openModal(`<h3>処方箋・資料を紐付け</h3>
+  <p class="muted">Googleドライブでスキャン→PDF化し、「共有リンク」をコピーして貼ってください。NASやクラウドの共有リンクでもOKです。</p>
+  <div class="field"><label>名前・ラベル</label><input id="f_flabel" placeholder="例：処方箋 2026年6月分"></div>
+  <div class="field"><label>リンク（URL）*</label><input id="f_furl" placeholder="https://drive.google.com/..."></div>
+  <div class="field"><label>日付</label><input id="f_fdate" type="date" value="${today()}"></div>
+  <div class="foot"><button class="btn subtle block" onclick="closeModal()">キャンセル</button><button class="btn block" onclick="saveFile()">保存</button></div>`);
+  setTimeout(()=>document.getElementById('f_furl').focus(),50); }
+function saveFile(){ const url=val('f_furl'); if(!/^https?:\/\//.test(url)){alert('https:// で始まる正しいリンクを入力してください');return;}
+  const p=cur(); p.files.push({id:uid(),label:val('f_flabel')||'資料',url,date:val('f_fdate')||today()}); save(); closeModal(); render(); }
+
+/* チーム */
+function openTeamModal(){ openModal(`<h3>チームメンバー</h3>
+  <p class="muted">ホーム上部のアバターに表示されます。看護チームの目印用です（端末内のみ）。</p>
+  <div id="teamList">${teamListHtml()}</div>
+  <div class="field" style="margin-top:10px"><label>メンバーを追加</label>
+    <div style="display:flex;gap:8px"><input id="f_team" placeholder="例：ひかる"><button class="btn" type="button" onclick="addTeam()">追加</button></div></div>
+  <div class="foot"><button class="btn subtle block" onclick="closeModal()">閉じる</button></div>`); }
+function teamListHtml(){ return db.team.length? db.team.map((m,i)=>`<div class="lrow"><div class="av" style="background:${colorOf(i)};margin:0">${esc(initials(m.name))}</div>
+    <div class="grow"><div class="t1">${esc(m.name)}</div></div><button class="btn danger sm" onclick="delTeam('${m.id}')">削除</button></div>`).join('')
+  : `<p class="muted">まだメンバーがいません。</p>`; }
+function addTeam(){ const n=val('f_team'); if(!n)return; db.team.push({id:uid(),name:n}); save();
+  document.getElementById('teamList').innerHTML=teamListHtml(); document.getElementById('f_team').value=''; }
+function delTeam(id){ db.team=db.team.filter(x=>x.id!==id); save(); document.getElementById('teamList').innerHTML=teamListHtml(); }
+
+/* 薬を調べる */
+function openDrugSearch(){ openModal(`<h3>🔎 薬を調べる</h3>
+  <div class="field"><input id="ds_q" placeholder="薬の名前（例：アムロジピン / ロキソニン）" oninput="runDrugSearch()"></div>
+  <div id="ds_result"></div>
+  <p class="muted" style="margin-top:10px">⚠️ 一般的な内容の目安です。正確な用量・飲み合わせ・最新の注意は添付文書・薬剤師・医師に確認してください。</p>
+  <div class="foot"><button class="btn subtle block" onclick="closeModal()">閉じる</button></div>`);
+  setTimeout(()=>document.getElementById('ds_q').focus(),50); runDrugSearch(); }
+function drugCard(d){ return `<div class="drug"><div><span class="dn">${esc(d.n)}</span><span class="dc">${esc(d.c)}</span></div>
+  ${d.a&&d.a.length?`<div class="da">別名・製品名：${d.a.map(esc).join('、')}</div>`:''}
+  <dl><dt>効能</dt><dd>${esc(d.e)}</dd><dt>副作用</dt><dd>${esc(d.s)}</dd><dt>注意</dt><dd>${esc(d.w)}</dd></dl></div>`; }
+function runDrugSearch(){ const q=(val('ds_q')||'').trim(); const box=document.getElementById('ds_result'); if(!box)return;
+  if(!q){ box.innerHTML=`<p class="muted">内蔵 ${DRUG_DB.length}件。よく使う薬から探せます。</p><div class="chipwrap">${DRUG_DB.slice(0,10).map(d=>`<button class="chip" onclick="document.getElementById('ds_q').value='${esc(d.n)}';runDrugSearch()">${esc(d.n)}</button>`).join('')}</div>`; return; }
+  const hits=DRUG_DB.filter(d=>d.n.includes(q)||d.c.includes(q)||(d.a||[]).some(a=>a.includes(q)));
+  box.innerHTML=hits.length? `<p class="muted">${hits.length}件</p>`+hits.map(drugCard).join('')
+    : `<div class="infobox">「${esc(q)}」は見つかりませんでした。<a href="https://www.google.com/search?q=${encodeURIComponent(q+' 効能 副作用 添付文書')}" target="_blank" rel="noopener">🔎 ネットで調べる</a></div>`; }
+
+/* バックアップ */
+function openBackup(){ openModal(`<h3>バックアップ・共有</h3>
+  <p class="muted">データはこの端末の中だけに保存されます。端末の故障・買い替え・データ消去で失われることがあるので、定期的に書き出してください。
+  書き出したファイルを共有フォルダ(NAS)に置けば、別の端末や仲間と共有できます。<br>
+  読み込みは「最新を取り込む＝<b>上書き</b>」「別の人のデータを合わせる＝<b>追加</b>」。くわしくは別紙「NAS共有・バックアップ手順書」を。</p>
+  <div class="field"><button class="btn block" onclick="exportData()">⤓ ファイルに書き出す</button></div>
+  <div class="field"><label>ファイルから読み込み</label><input type="file" id="importFile" accept="application/json"></div>
+  <div class="foot"><button class="btn subtle block" onclick="closeModal()">閉じる</button></div>`);
+  document.getElementById('importFile').addEventListener('change',importData); }
+function exportData(){ const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}); const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='ナースのドラッグ手帳_'+today()+'.json'; a.click(); URL.revokeObjectURL(a.href); }
+function importData(e){ const file=e.target.files[0]; if(!file)return; const r=new FileReader();
+  r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!d.patients)throw 0;
+      const add=confirm('このファイルを読み込みます。\n\n　OK ＝ 今のデータに「追加」（おすすめ）\n　キャンセル ＝ 全部「上書き」');
+      if(add){ const md=migrate(d); const inc=md.patients.map(p=>({...p,id:uid()})); db.patients=db.patients.concat(inc);
+        currentId=null; const have=new Set(db.board.map(b=>b.id)); let ap=0; md.board.forEach(b=>{if(!have.has(b.id)){db.board.push(b);ap++;}});
+        (md.team||[]).forEach(t=>{ if(!db.team.some(x=>x.name===t.name))db.team.push({id:uid(),name:t.name}); });
+        db.events=db.events||[]; (md.events||[]).forEach(ev=>{ if(!db.events.some(x=>x.id===ev.id))db.events.push(ev); });
+        view='chart'; save(); closeModal(); render(); alert(inc.length+'人を追加しました'+(ap?'（共有ノート'+ap+'件も追加）':''));
+      }else{ if(!confirm('本当に今のデータを全部消して上書きしますか？'))return; db=migrate(d); currentId=null; view='home'; save(); closeModal(); render(); alert('上書きで読み込みました'); }
+    }catch(err){ alert('読み込めませんでした。正しいファイルを選んでください。'); } };
+  r.readAsText(file); }
+
+render();
+</script>
+</body>
+</html>

@@ -99,6 +99,10 @@
   .tag.date{background:var(--amber-soft);color:var(--amber)}
   .tag.stock{background:var(--mint-soft);color:var(--mint-d)}
   .tag.stock.low{background:var(--pink-soft);color:var(--pink-d)}
+  .chead.clk{cursor:pointer;border-radius:10px;padding:4px 6px;margin:-4px -6px;transition:background .15s}
+  .chead.clk:hover,.chead.clk:active{background:rgba(0,0,0,.04)}
+  .chead.clk .cact{margin-left:auto;color:var(--sub);font-size:20px;font-weight:bold;display:flex;align-items:center;gap:4px}
+  .chead.clk .countpill{background:#fff;border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-size:12px;font-weight:800;color:var(--sub)}
   .factag{font-size:11px;padding:2px 9px;border-radius:999px;font-weight:800;display:inline-block;margin:3px 4px 0 0}
   .facdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
   .facbar{width:6px;align-self:stretch;border-radius:6px;flex-shrink:0}
@@ -339,6 +343,8 @@ let calRef=new Date();
 let calSel=today();
 let facFilter='';
 let pFacs=[];
+let homeFocus=null;
+let careFilter='all';
 
 function load(){
   try{const d=JSON.parse(localStorage.getItem(STORE_KEY)); if(d&&d.patients)return migrate(d);}catch(e){}
@@ -366,7 +372,7 @@ function initials(name){ name=(name||'').replace(/\s/g,''); return name.slice(0,
 function val(id){ const e=document.getElementById(id); return e?e.value.trim():''; }
 
 /* ===== ナビ ===== */
-function setView(v){ view=v; if(v==='chart'&&db.patients.length===0)currentId=null; render(); }
+function setView(v){ view=v; homeFocus=null; if(v==='chart'&&db.patients.length===0)currentId=null; render(); }
 function render(){
   document.querySelectorAll('.nav').forEach(n=>n.classList.toggle('active',n.dataset.v===view));
   const c=document.getElementById('content');
@@ -391,63 +397,152 @@ function scheduleForPatient(p,date){
   return out;
 }
 function isTaken(p,date,medId,t){ return !!(p.intakeLog[date]&&p.intakeLog[date][medId+'@'+t]); }
+function openHomeFocus(k){ homeFocus=k; render(); window.scrollTo(0,0); }
+function closeHomeFocus(){ homeFocus=null; render(); window.scrollTo(0,0); }
 function renderHome(c){
+  if(homeFocus){ return renderHomeFocus(c); }
   const d=today();
-  // 今日の処置・お願い（継続・新規を上に）
   const care=[]; db.patients.forEach(p=>(p.care||[]).forEach(it=>{ if(it.status==='継続'||it.status==='新規')care.push({p,it}); }));
   care.sort((a,b)=>careStatusRank(a.it.status)-careStatusRank(b.it.status)||(b.it.date+b.it.id).localeCompare(a.it.date+a.it.id));
-
-  // 残薬不足
   const low=[]; db.patients.forEach(p=>p.medications.forEach(m=>{
     if(m.active!==false&&m.stock!=null&&m.stock!==''&&Number(m.stock)<=(Number(m.stockAlert)||7))
       low.push({p,m}); }));
-  // 受診予定
   const visits=db.patients.filter(p=>p.nextVisit).map(p=>({p,dd:daysBetween(d,p.nextVisit)}))
-    .filter(v=>v.dd>=-1).sort((a,b)=>a.dd-b.dd).slice(0,3);
-  // 重要申し送り
+    .filter(v=>v.dd>=-1).sort((a,b)=>a.dd-b.dd);
   const imp=[]; db.patients.forEach(p=>p.handoffs.filter(h=>h.important).forEach(h=>imp.push({p,h})));
   imp.sort((a,b)=>(b.h.date+b.h.id).localeCompare(a.h.date+a.h.id));
+  const sumCnt=db.patients.filter(p=>p.summary).length;
+
+  const head=(k,ic,emo,ct,n)=>`<div class="chead clk" onclick="openHomeFocus('${k}')">
+    <div class="ic ${ic}">${emo}</div><div class="ct">${ct}</div>
+    <div class="cact"><span class="countpill">${n}</span><span>›</span></div></div>`;
 
   c.innerHTML = teamBar()
-    + `<div class="card tint-pink">
-        <div class="chead"><div class="ic pink">🚑</div><div class="ct">緊急時サマリーを見る</div></div>
-        <p class="muted" style="margin-top:-4px">急な受診・引き継ぎのとき。利用者さんを選ぶと、その人の状況サマリーがすぐ開きます。</p>
-        ${db.patients.length? `<div class="chipwrap">${db.patients.map(p=>`<button class="chip" onclick="openPatient('${p.id}')">${facDot(p)}${p.summary?'🚑 ':'👤 '}${esc(p.name)}</button>`).join('')}</div>`
+    + `<div class="card tint-pink">${head('summary','pink','🚑','緊急時サマリー',db.patients.length)}
+        <p class="muted" style="margin-top:2px">急な受診・引き継ぎのとき。利用者さんを選ぶと、その人の状況サマリーがすぐ開きます。</p>
+        ${db.patients.length? `<div class="chipwrap">${db.patients.slice(0,6).map(p=>`<button class="chip" onclick="openPatient('${p.id}')">${facDot(p)}${p.summary?'🚑 ':'👤 '}${esc(p.name)}</button>`).join('')}${db.patients.length>6?`<button class="chip" onclick="openHomeFocus('summary')">… 全${db.patients.length}人</button>`:''}</div>`
           : `<div class="muted">まだ利用者がいません。下の「📒 カルテ」から追加できます。</div>`}
        </div>`
-    + `<div class="card tint-mint">
-        <div class="chead"><div class="ic mint">🩹</div><div class="ct">今日の処置・お願い</div>
-          <div class="cact"><span class="muted">${fmtDate(d)}</span></div></div>
-        ${care.length? care.map(({p,it})=>`<div class="lrow" onclick="openPatient('${p.id}')">
+    + `<div class="card tint-mint">${head('care','mint','🩹','今日の処置・お願い',care.length)}
+        ${care.length? care.slice(0,3).map(({p,it})=>`<div class="lrow" onclick="openPatient('${p.id}')">
             <div class="ic mint">${it.status==='継続'?'🔁':'🆕'}</div>
             <div class="grow"><div class="t1">${esc(p.name)} <span class="pill ${it.status==='継続'?'on':'req'}">${esc(it.status)}</span></div>
-            <div class="t2">${esc(it.title)}${it.detail?' ／ '+esc(it.detail):''}</div></div></div>`).join('')
-          : `<div class="muted">継続・新規の処置がある利用者さんの<b>お名前と処置の内容</b>が、ここに表示されます。<br>「カルテ → 🩹 処置・お願い」から追加できます。</div>`}
+            <div class="t2">${esc(it.title)}${it.detail?' ／ '+esc(it.detail):''}</div></div></div>`).join('') + (care.length>3?`<button class="btn ghost sm block" onclick="openHomeFocus('care')">… 他 ${care.length-3}件を見る</button>`:'')
+          : `<div class="muted">継続・新規の処置がある利用者さんの<b>お名前と処置の内容</b>が、ここに表示されます。<br>見出しの「›」を押すと終了済みも含めて全件見られます。</div>`}
        </div>`
-    + `<div class="card ${low.length?'tint-pink':''}">
-        <div class="chead"><div class="ic pink">⚠️</div><div class="ct">残薬がすくない薬</div></div>
-        ${low.length? low.map(({p,m})=>`<div class="lrow" onclick="openPatient('${p.id}')">
+    + `<div class="card ${low.length?'tint-pink':''}">${head('low','pink','⚠️','残薬がすくない薬',low.length)}
+        ${low.length? low.slice(0,3).map(({p,m})=>`<div class="lrow" onclick="openPatient('${p.id}')">
             <div class="ic pink">💊</div><div class="grow"><div class="t1">${esc(m.name)}</div>
             <div class="t2">${esc(p.name)} ／ 残り ${esc(String(m.stock))}回分</div></div>
-            <span class="pill req">補充</span></div>`).join('')
-          : `<div class="muted">不足している薬はありません。</div>`}
+            <span class="pill req">補充</span></div>`).join('') + (low.length>3?`<button class="btn ghost sm block" onclick="openHomeFocus('low')">… 他 ${low.length-3}件を見る</button>`:'')
+          : `<div class="muted">不足している薬はありません。<br>見出しの「›</span>」で全員のお薬を残量順に一覧できます。</div>`}
        </div>`
-    + `<div class="card">
-        <div class="chead"><div class="ic blue">🏥</div><div class="ct">もうすぐ受診</div></div>
-        ${visits.length? visits.map(({p,dd})=>`<div class="lrow" onclick="openPatient('${p.id}')">
+    + `<div class="card">${head('visits','blue','🏥','もうすぐ受診',visits.length)}
+        ${visits.length? visits.slice(0,3).map(({p,dd})=>`<div class="lrow" onclick="openPatient('${p.id}')">
             <div class="ic blue">📅</div><div class="grow"><div class="t1">${esc(p.name)}</div>
             <div class="t2">${fmtDate(p.nextVisit)}${p.nextVisitNote?' ／ '+esc(p.nextVisitNote):''}</div></div>
-            <span class="pill ${dd<=1?'req':'on'}">${dd<0?'過ぎ':dd===0?'今日':'あと'+dd+'日'}</span></div>`).join('')
-          : `<div class="muted">予定はありません。</div>`}
+            <span class="pill ${dd<=1?'req':'on'}">${dd<0?'過ぎ':dd===0?'今日':'あと'+dd+'日'}</span></div>`).join('') + (visits.length>3?`<button class="btn ghost sm block" onclick="openHomeFocus('visits')">… 他 ${visits.length-3}件を見る</button>`:'')
+          : `<div class="muted">予定はありません。見出しの「›」で予定表（カレンダー）も開けます。</div>`}
        </div>`
-    + `<div class="card">
-        <div class="chead"><div class="ic amber">📣</div><div class="ct">重要な申し送り</div></div>
+    + `<div class="card">${head('imp','amber','📣','重要な申し送り',imp.length)}
         ${imp.length? imp.slice(0,3).map(({p,h})=>`<div class="lrow" onclick="openPatient('${p.id}')">
             <div class="ic amber">⚠️</div><div class="grow"><div class="t1">${esc(p.name)}</div>
-            <div class="t2">${esc(h.text)}</div></div></div>`).join('')
+            <div class="t2">${esc(h.text)}</div></div></div>`).join('') + (imp.length>3?`<button class="btn ghost sm block" onclick="openHomeFocus('imp')">… 他 ${imp.length-3}件を見る</button>`:'')
           : `<div class="muted">重要な申し送りはありません。</div>`}
        </div>`
     + `<button class="btn block" onclick="setView('chart')">📒 カルテ（利用者一覧）を見る</button>`;
+}
+
+/* ===== ホーム → 各セクションの詳細（一覧）画面 ===== */
+function renderHomeFocus(c){
+  const d=today();
+  const back=`<button class="btn ghost sm" onclick="closeHomeFocus()">‹ ホームへ</button>`;
+  const empty=(emo,msg,btnLabel,btnAct)=>`<div class="empty"><div class="big">${emo}</div><p class="muted">${msg}</p>${btnAct?`<button class="btn" onclick="${btnAct}">${btnLabel}</button>`:''}</div>`;
+  if(homeFocus==='summary'){
+    const list=[...db.patients].sort((a,b)=>(b.summary?1:0)-(a.summary?1:0));
+    const body=list.length? list.map((p,i)=>{
+      const fc=facColor(p); const preview=p.summary?p.summary.replace(/\n/g,' ').slice(0,60)+(p.summary.length>60?'…':''):'（サマリー未記入）';
+      return `<div class="lrow" onclick="openPatient('${p.id}')">
+        ${fc?`<div class="facbar" style="background:${fc}"></div>`:''}
+        <div class="pav" style="background:${fc||colorOf(i)}">${esc(initials(p.name))}</div>
+        <div class="grow"><div class="t1">${p.summary?'🚑 ':'👤 '}${esc(p.name)}</div>
+          <div class="t2">${esc(preview)}</div>${facChips(p)}</div>
+        <span style="color:var(--sub)">›</span></div>`;}).join('')
+      : empty('🚑','まだ利用者がいません。','＋ 利用者を追加',"setView('chart');closeHomeFocus()");
+    c.innerHTML = back+`<div class="chead" style="margin:12px 2px 10px"><div class="ic pink">🚑</div><div class="ct">緊急時サマリー（${list.length}人）</div></div>
+      <p class="muted">👤 サマリー未記入 ／ 🚑 サマリーあり。タップでその人のサマリーが開きます。</p>${body}`;
+    return;
+  }
+  if(homeFocus==='care'){
+    const all=[]; db.patients.forEach(p=>(p.care||[]).forEach(it=>all.push({p,it})));
+    all.sort((a,b)=>careStatusRank(a.it.status)-careStatusRank(b.it.status)||(b.it.date+b.it.id).localeCompare(a.it.date+a.it.id));
+    const filt=careFilter==='all'?all:all.filter(x=>x.it.status===careFilter);
+    const chip=(k,l)=>`<button class="chip ${careFilter===k?'sel':''}" onclick="careFilter='${k}';render()">${l}</button>`;
+    const body=filt.length? filt.map(({p,it})=>{
+      const fc=facColor(p);
+      return `<div class="lrow" onclick="openPatient('${p.id}')">
+        ${fc?`<div class="facbar" style="background:${fc}"></div>`:''}
+        <div class="ic mint">${it.status==='継続'?'🔁':it.status==='新規'?'🆕':'✅'}</div>
+        <div class="grow"><div class="t1">${esc(p.name)} <span class="pill ${it.status==='継続'?'on':it.status==='新規'?'req':'off'}">${esc(it.status)}</span></div>
+          <div class="t2">${esc(it.title)}${it.detail?' ／ '+esc(it.detail):''}</div>
+          <div class="muted" style="font-size:11px;margin-top:2px">${fmtDate(it.date)}</div></div></div>`;}).join('')
+      : empty('🩹','該当する処置・お願いはありません。','📅 予定表で見る',"setView('calendar');closeHomeFocus()");
+    c.innerHTML = back+`<div class="chead" style="margin:12px 2px 10px"><div class="ic mint">🩹</div><div class="ct">処置・お願い（${all.length}件）</div></div>
+      <div class="chipwrap" style="margin-bottom:10px">${chip('all','すべて')}${chip('継続','🔁 継続')}${chip('新規','🆕 新規')}${chip('終了','✅ 終了')}</div>
+      ${body}<div style="height:10px"></div>
+      <button class="btn ghost block" onclick="setView('calendar');closeHomeFocus()">📅 予定表（カレンダー）で見る</button>`;
+    return;
+  }
+  if(homeFocus==='low'){
+    const all=[]; db.patients.forEach(p=>p.medications.forEach(m=>{
+      if(m.active!==false&&m.stock!=null&&m.stock!=='')all.push({p,m,low:Number(m.stock)<=(Number(m.stockAlert)||7)});
+    }));
+    all.sort((a,b)=>Number(a.m.stock)-Number(b.m.stock));
+    const body=all.length? all.map(({p,m,low})=>{
+      const fc=facColor(p);
+      return `<div class="lrow" onclick="openPatient('${p.id}')">
+        ${fc?`<div class="facbar" style="background:${fc}"></div>`:''}
+        <div class="ic ${low?'pink':'mint'}">💊</div>
+        <div class="grow"><div class="t1">${esc(m.name)} <span class="muted" style="font-size:12px">${esc(m.dose||'')}</span></div>
+          <div class="t2">${esc(p.name)} ／ 残り ${esc(String(m.stock))}回分</div></div>
+        <span class="pill ${low?'req':'on'}">${low?'補充':'OK'}</span></div>`;}).join('')
+      : empty('💊','残量が記録されている薬がありません。',null,null);
+    c.innerHTML = back+`<div class="chead" style="margin:12px 2px 10px"><div class="ic pink">⚠️</div><div class="ct">残薬チェック（${all.length}件）</div></div>
+      <p class="muted">残り回数が少ない順に並んでいます。タップで該当の利用者さんを開きます。</p>${body}`;
+    return;
+  }
+  if(homeFocus==='visits'){
+    const all=db.patients.filter(p=>p.nextVisit).map(p=>({p,dd:daysBetween(d,p.nextVisit)})).sort((a,b)=>a.dd-b.dd);
+    const body=all.length? all.map(({p,dd})=>{
+      const fc=facColor(p);
+      return `<div class="lrow" onclick="openPatient('${p.id}')">
+        ${fc?`<div class="facbar" style="background:${fc}"></div>`:''}
+        <div class="ic blue">📅</div>
+        <div class="grow"><div class="t1">${esc(p.name)}</div>
+          <div class="t2">${fmtDate(p.nextVisit)}${p.nextVisitNote?' ／ '+esc(p.nextVisitNote):''}</div></div>
+        <span class="pill ${dd<=1?'req':dd<0?'off':'on'}">${dd<0?Math.abs(dd)+'日前':dd===0?'今日':'あと'+dd+'日'}</span></div>`;}).join('')
+      : empty('🏥','受診予定はありません。利用者編集で「次回の受診予定」を入れると出ます。','📅 予定表で見る',"setView('calendar');closeHomeFocus()");
+    c.innerHTML = back+`<div class="chead" style="margin:12px 2px 10px"><div class="ic blue">🏥</div><div class="ct">受診予定（${all.length}人）</div></div>${body}
+      <div style="height:10px"></div>
+      <button class="btn ghost block" onclick="setView('calendar');closeHomeFocus()">📅 予定表（カレンダー）で見る</button>`;
+    return;
+  }
+  if(homeFocus==='imp'){
+    const all=[]; db.patients.forEach(p=>p.handoffs.filter(h=>h.important).forEach(h=>all.push({p,h})));
+    all.sort((a,b)=>(b.h.date+b.h.id).localeCompare(a.h.date+a.h.id));
+    const body=all.length? all.map(({p,h})=>{
+      const fc=facColor(p);
+      return `<div class="lrow" onclick="openPatient('${p.id}')">
+        ${fc?`<div class="facbar" style="background:${fc}"></div>`:''}
+        <div class="ic amber">⚠️</div>
+        <div class="grow"><div class="t1">${esc(p.name)}</div>
+          <div class="t2">${esc(h.text)}</div>
+          <div class="muted" style="font-size:11px;margin-top:2px">${fmtDate(h.date)}${h.author?' ／ '+esc(h.author):''}</div></div></div>`;}).join('')
+      : empty('📣','重要な申し送りはありません。','カルテで申し送りを見る',"setView('chart');closeHomeFocus()");
+    c.innerHTML = back+`<div class="chead" style="margin:12px 2px 10px"><div class="ic amber">📣</div><div class="ct">重要な申し送り（${all.length}件）</div></div>${body}`;
+    return;
+  }
+  closeHomeFocus();
 }
 
 /* ===== カルテ（利用者一覧／詳細） ===== */

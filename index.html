@@ -865,6 +865,7 @@ function renderMore(c){
     <div class="lrow" onclick="openTeamModal()"><div class="ic pink">👥</div><div class="grow"><div class="t1">チームメンバー</div><div class="t2">ホームのアバターに表示</div></div><span style="color:var(--sub)">›</span></div>
     <div class="lrow" onclick="setView('notify')"><div class="ic amber">🔔</div><div class="grow"><div class="t1">お知らせ</div><div class="t2">残薬・受診・要確認のまとめ</div></div><span style="color:var(--sub)">›</span></div>
     <div class="lrow" onclick="openBackup()"><div class="ic blue">⤓</div><div class="grow"><div class="t1">バックアップ・共有</div><div class="t2">書き出し／追加・上書き読み込み</div></div><span style="color:var(--sub)">›</span></div>
+    <div class="lrow" onclick="addSampleYoshihara()"><div class="ic amber">🧪</div><div class="grow"><div class="t1">サンプル：吉原美智子さんを入れる</div><div class="t2">お薬5種（メマンチン/アリピプラゾール/アゾセミド/エンレスト/酢酸亜鉛）</div></div><span style="color:var(--sub)">›</span></div>
     <div class="card" style="margin-top:8px">
       <div class="chead"><div class="ic amber">🛟</div><div class="ct">このアプリについて</div></div>
       <p class="muted">データはこの端末の中だけに保存され、外部には送信されません。看護チーム内だけで共有され、患者様のプライバシーは外部に公開されません。
@@ -1025,6 +1026,39 @@ function runDrugSearch(){ const q=(val('ds_q')||'').trim(); const box=document.g
   const hits=DRUG_DB.filter(d=>d.n.includes(q)||d.c.includes(q)||(d.a||[]).some(a=>a.includes(q)));
   box.innerHTML=hits.length? `<p class="muted">${hits.length}件</p>`+hits.map(drugCard).join('')
     : `<div class="infobox">「${esc(q)}」は見つかりませんでした。<a href="https://www.google.com/search?q=${encodeURIComponent(q+' 効能 副作用 添付文書')}" target="_blank" rel="noopener">🔎 ネットで調べる</a></div>`; }
+
+/* サンプル投入：吉原美智子さん */
+function addSampleYoshihara(){
+  if(db.patients.some(p=>p.name==='吉原美智子')){
+    if(!confirm('「吉原美智子」さんは既に登録されています。\nもう1人追加しますか？\n（同じ薬を持つ別IDの利用者が増えます。重複が嫌なら「キャンセル」）'))return;
+  }
+  const np={
+    id:uid(), name:'吉原美智子', kana:'よしはら みちこ',
+    facilities:['頚城'],
+    info:'90歳 / アルツハイマー型認知症・慢性心不全',
+    nextVisit:'', nextVisitNote:'', summary:'',
+    medications:[
+      {id:uid(),active:true,name:'メマンチン（メマリー）ODT',dose:'10mg 1錠',timing:['朝'],start:'',end:'',stock:null,stockAlert:7,
+       purpose:'中等度〜高度アルツハイマー型認知症の進行をゆるやかにする',
+       note:'【副作用】めまい、眠気、便秘、頭痛\n【注意】腎機能が低下している人は用量調整。OD錠は水なしでも口の中で溶ける。',fileUrl:''},
+      {id:uid(),active:true,name:'アリピプラゾール錠',dose:'1mg 1錠',timing:['朝'],start:'',end:'',stock:null,stockAlert:7,
+       purpose:'抗精神病薬（統合失調症・双極性障害。認知症の興奮等に用いられることも）',
+       note:'【副作用】不眠、アカシジア（じっとできずそわそわする）、手のふるえ・こわばり、眠気\n【注意】自己判断で中止しない。少量から。高齢者は転倒・誤嚥に注意。',fileUrl:''},
+      {id:uid(),active:true,name:'アゾセミド（ダイアート）',dose:'30mg 1錠',timing:['朝'],start:'',end:'',stock:null,stockAlert:7,
+       purpose:'うっ血性心不全によるむくみをとる（長時間型ループ利尿薬）',
+       note:'【副作用】脱水、低カリウム血症、こむら返り、めまい、頻尿\n【注意】水分・電解質に注意。朝に飲むと夜間の頻尿を避けやすい。',fileUrl:''},
+      {id:uid(),active:true,name:'エンレスト（サクビトリルバルサルタン）',dose:'100mg 1錠',timing:['朝','夕'],start:'',end:'',stock:null,stockAlert:7,
+       purpose:'慢性心不全の治療（ARNI：アンジオテンシン受容体ネプリライシン阻害薬）',
+       note:'【副作用】低血圧・めまい、高カリウム血症、腎機能の低下、咳\n【注意】ACE阻害薬とは併用しない（切り替え時は間隔をあける）。妊娠中は禁忌。脱水時は血圧低下に注意。',fileUrl:''},
+      {id:uid(),active:true,name:'酢酸亜鉛錠',dose:'25mg 1錠',timing:['朝','夕'],start:'',end:'',stock:null,stockAlert:7,
+       purpose:'低亜鉛血症の治療（亜鉛の補充）',
+       note:'【副作用】銅欠乏（貧血・白血球減少）、吐き気・腹痛\n【注意】長期では銅・血液（血算）の値を確認。食後に飲むと胃症状が出にくい。',fileUrl:''}
+    ],
+    health:[], handoffs:[], files:[], care:[], log:[], intakeLog:{}
+  };
+  db.patients.push(np); currentId=np.id; save(); currentTab='med'; view='chart'; render();
+  alert('✅ 吉原美智子さん（お薬5種）を追加しました。');
+}
 
 /* バックアップ */
 function openBackup(){ openModal(`<h3>バックアップ・共有</h3>

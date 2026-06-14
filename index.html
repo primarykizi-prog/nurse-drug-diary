@@ -342,14 +342,15 @@ let pFacs=[];
 
 function load(){
   try{const d=JSON.parse(localStorage.getItem(STORE_KEY)); if(d&&d.patients)return migrate(d);}catch(e){}
-  return {patients:[],board:[],team:[],events:[]};
+  return {patients:[],board:[],team:[],events:[],customDrugs:[]};
 }
 function migrate(d){
-  d.board=d.board||[]; d.team=d.team||[]; d.events=d.events||[];
+  d.board=d.board||[]; d.team=d.team||[]; d.events=d.events||[]; d.customDrugs=d.customDrugs||[];
   d.patients.forEach(p=>{ p.intakeLog=p.intakeLog||{}; p.files=p.files||[]; p.health=p.health||[]; p.handoffs=p.handoffs||[];
     p.care=p.care||[]; p.log=p.log||[]; if(p.summary===undefined)p.summary=''; p.facilities=p.facilities||[]; });
   return d;
 }
+function allDrugs(){ return DRUG_DB.concat((db.customDrugs||[]).map(x=>({...x,custom:true}))); }
 function careStatusRank(s){ return ({'継続':0,'新規':1,'終了':2})[s] ?? 1; }
 function save(){ localStorage.setItem(STORE_KEY,JSON.stringify(db)); }
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
@@ -950,10 +951,10 @@ function openMedModal(id){
   setTimeout(()=>document.getElementById('f_mname').focus(),50);
 }
 function toggleTiming(el,t){ if(medTiming.includes(t)){medTiming=medTiming.filter(x=>x!==t);el.classList.remove('sel');}else{medTiming.push(t);el.classList.add('sel');} }
-function findDrug(q){ q=(q||'').trim().toLowerCase(); if(!q)return null;
-  return DRUG_DB.find(d=>d.n.toLowerCase()===q||(d.a||[]).some(a=>a.toLowerCase()===q))||DRUG_DB.find(d=>d.n.toLowerCase().includes(q)||(d.a||[]).some(a=>a.toLowerCase().includes(q))); }
+function findDrug(q){ q=(q||'').trim().toLowerCase(); if(!q)return null; const all=allDrugs();
+  return all.find(d=>d.n.toLowerCase()===q||(d.a||[]).some(a=>a.toLowerCase()===q))||all.find(d=>d.n.toLowerCase().includes(q)||(d.a||[]).some(a=>a.toLowerCase().includes(q))); }
 function autoSuggest(){ const q=val('f_mname'); const box=document.getElementById('suggest'); if(!box)return; if(!q){box.innerHTML='';return;}
-  const hits=DRUG_DB.filter(d=>d.n.includes(q)||(d.a||[]).some(a=>a.includes(q))).slice(0,4);
+  const hits=allDrugs().filter(d=>d.n.includes(q)||(d.a||[]).some(a=>a.includes(q))).slice(0,4);
   box.innerHTML=hits.length?`<div style="margin-top:6px" class="chipwrap">${hits.map(d=>`<button type="button" class="chip" onclick="pickDrug('${esc(d.n)}')">${esc(d.n)}</button>`).join('')}</div>`:''; }
 function pickDrug(n){ document.getElementById('f_mname').value=n; document.getElementById('suggest').innerHTML=''; lookupForMed(); }
 function lookupForMed(){ const q=val('f_mname'); const d=findDrug(q); const box=document.getElementById('suggest');
@@ -1019,22 +1020,52 @@ function openDrugSearch(){ openModal(`<h3>🔎 薬を調べる</h3>
   <div class="field"><input id="ds_q" placeholder="薬の名前（例：アムロジピン / ロキソニン）" oninput="runDrugSearch()"></div>
   <div id="ds_result"></div>
   <p class="muted" style="margin-top:10px">⚠️ 一般的な内容の目安です。正確な用量・飲み合わせ・最新の注意は添付文書・薬剤師・医師に確認してください。</p>
-  <div class="foot"><button class="btn subtle block" onclick="closeModal()">閉じる</button></div>`);
+  <div class="foot"><button class="btn block" onclick="openCustomDrugModal()">＋ 自分で薬を追加</button><button class="btn subtle block" onclick="closeModal()">閉じる</button></div>`);
   setTimeout(()=>document.getElementById('ds_q').focus(),50); runDrugSearch(); }
-function drugCard(d){ return `<div class="drug"><div><span class="dn">${esc(d.n)}</span><span class="dc">${esc(d.c)}</span></div>
+function drugCard(d){ return `<div class="drug"><div><span class="dn">${esc(d.n)}</span><span class="dc">${esc(d.c)}</span>${d.custom?'<span class="dc" style="background:#fdf2e1;color:#9c6a25;margin-left:4px">マイ追加</span>':''}</div>
   ${d.a&&d.a.length?`<div class="da">別名・製品名：${d.a.map(esc).join('、')}</div>`:''}
-  <dl><dt>効能</dt><dd>${esc(d.e)}</dd><dt>副作用</dt><dd>${esc(d.s)}</dd><dt>注意</dt><dd>${esc(d.w)}</dd></dl></div>`; }
-function runDrugSearch(){ const q=(val('ds_q')||'').trim(); const box=document.getElementById('ds_result'); if(!box)return;
-  if(!q){ box.innerHTML=`<p class="muted">内蔵 ${DRUG_DB.length}件。よく使う薬から探せます。</p><div class="chipwrap">${DRUG_DB.slice(0,10).map(d=>`<button class="chip" onclick="document.getElementById('ds_q').value='${esc(d.n)}';runDrugSearch()">${esc(d.n)}</button>`).join('')}</div>`; return; }
-  const hits=DRUG_DB.filter(d=>d.n.includes(q)||d.c.includes(q)||(d.a||[]).some(a=>a.includes(q)));
+  <dl><dt>効能</dt><dd>${esc(d.e)}</dd><dt>副作用</dt><dd>${esc(d.s)}</dd><dt>注意</dt><dd>${esc(d.w)}</dd></dl>
+  ${d.custom?`<div style="margin-top:6px;display:flex;gap:6px"><button class="btn ghost sm" onclick="openCustomDrugModal('${esc(d.id)}')">編集</button><button class="btn danger sm" onclick="delCustomDrug('${esc(d.id)}')">削除</button></div>`:''}</div>`; }
+function runDrugSearch(){ const q=(val('ds_q')||'').trim(); const box=document.getElementById('ds_result'); if(!box)return; const all=allDrugs();
+  if(!q){ const cnt=DRUG_DB.length+(db.customDrugs||[]).length;
+    box.innerHTML=`<p class="muted">内蔵 ${DRUG_DB.length}件 ${(db.customDrugs||[]).length?'＋ マイ追加 '+(db.customDrugs||[]).length+'件':''}（計 ${cnt}件）</p><div class="chipwrap">${all.slice(0,12).map(d=>`<button class="chip" onclick="document.getElementById('ds_q').value='${esc(d.n)}';runDrugSearch()">${esc(d.n)}</button>`).join('')}</div>`; return; }
+  const hits=all.filter(d=>d.n.includes(q)||d.c.includes(q)||(d.a||[]).some(a=>a.includes(q)));
   box.innerHTML=hits.length? `<p class="muted">${hits.length}件</p>`+hits.map(drugCard).join('')
-    : `<div class="infobox">「${esc(q)}」は見つかりませんでした。<a href="https://www.google.com/search?q=${encodeURIComponent(q+' 効能 副作用 添付文書')}" target="_blank" rel="noopener">🔎 ネットで調べる</a></div>`; }
+    : `<div class="infobox">「${esc(q)}」は見つかりませんでした。<br><a href="https://www.google.com/search?q=${encodeURIComponent(q+' 効能 副作用 添付文書')}" target="_blank" rel="noopener">🔎 ネットで調べる</a><div style="margin-top:8px"><button class="btn sm" onclick="openCustomDrugModal('',document.getElementById('ds_q').value)">＋ この名前で追加する</button></div></div>`; }
+function openCustomDrugModal(id,prefName){
+  const d=id?(db.customDrugs||[]).find(x=>x.id===id):null;
+  openModal(`<h3>${d?'マイ薬を編集':'＋ 自分で薬を追加'}</h3>
+    <p class="muted">ネットや添付文書で調べた薬を保存できます。次から候補に出ます。</p>
+    <div class="field"><label>名前 *</label><input id="cd_n" value="${esc(d?.n||prefName||'')}" placeholder="例：トラムセット配合錠"></div>
+    <div class="field"><label>分類</label><input id="cd_c" value="${esc(d?.c||'')}" placeholder="例：鎮痛薬 / 抗生物質"></div>
+    <div class="field"><label>別名・製品名（カンマ区切り）</label><input id="cd_a" value="${esc((d?.a||[]).join('、'))}" placeholder="例：トラマール、アセトアミノフェン配合"></div>
+    <div class="field"><label>効能（何の薬か）</label><textarea id="cd_e" placeholder="例：中等度〜強い痛みを和らげる">${esc(d?.e||'')}</textarea></div>
+    <div class="field"><label>副作用</label><textarea id="cd_s" placeholder="例：吐き気、眠気、便秘">${esc(d?.s||'')}</textarea></div>
+    <div class="field"><label>注意</label><textarea id="cd_w" placeholder="例：眠くなるので運転禁止。アルコール厳禁。">${esc(d?.w||'')}</textarea></div>
+    <div class="foot">
+      ${d?`<button class="btn danger" onclick="delCustomDrug('${d.id}')">削除</button>`:''}
+      <button class="btn subtle block" onclick="closeModal();openDrugSearch()">キャンセル</button>
+      <button class="btn block" onclick="saveCustomDrug('${id||''}')">保存</button>
+    </div>`);
+  setTimeout(()=>document.getElementById('cd_n').focus(),50);
+}
+function saveCustomDrug(id){ const n=val('cd_n'); if(!n){alert('名前を入れてください');return;}
+  const a=val('cd_a').split(/[、,]/).map(x=>x.trim()).filter(Boolean);
+  const data={n,c:val('cd_c'),a,e:val('cd_e'),s:val('cd_s'),w:val('cd_w')};
+  db.customDrugs=db.customDrugs||[];
+  if(id){ const x=db.customDrugs.find(x=>x.id===id); if(x)Object.assign(x,data); }
+  else db.customDrugs.push({id:uid(),...data});
+  save(); closeModal(); openDrugSearch(); document.getElementById('ds_q').value=n; runDrugSearch();
+}
+function delCustomDrug(id){ if(!confirm('このマイ薬を削除しますか？'))return;
+  db.customDrugs=(db.customDrugs||[]).filter(x=>x.id!==id); save(); closeModal(); openDrugSearch(); }
 
 /* サンプル投入：吉原美智子さん */
 function addSampleYoshihara(){
   if(db.patients.some(p=>p.name==='吉原美智子')){
     if(!confirm('「吉原美智子」さんは既に登録されています。\nもう1人追加しますか？\n（同じ薬を持つ別IDの利用者が増えます。重複が嫌なら「キャンセル」）'))return;
   }
+  const PDF='samples/yoshihara_okusuri_sample.pdf';
   const np={
     id:uid(), name:'吉原美智子', kana:'よしはら みちこ',
     facilities:['頚城'],
@@ -1043,19 +1074,19 @@ function addSampleYoshihara(){
     medications:[
       {id:uid(),active:true,name:'メマンチン（メマリー）ODT',dose:'10mg 1錠',timing:['朝'],start:'',end:'',stock:null,stockAlert:7,
        purpose:'中等度〜高度アルツハイマー型認知症の進行をゆるやかにする',
-       note:'【副作用】めまい、眠気、便秘、頭痛\n【注意】腎機能が低下している人は用量調整。OD錠は水なしでも口の中で溶ける。',fileUrl:''},
+       note:'【副作用】めまい、眠気、便秘、頭痛\n【注意】腎機能が低下している人は用量調整。OD錠は水なしでも口の中で溶ける。',fileUrl:PDF},
       {id:uid(),active:true,name:'アリピプラゾール錠',dose:'1mg 1錠',timing:['朝'],start:'',end:'',stock:null,stockAlert:7,
        purpose:'抗精神病薬（統合失調症・双極性障害。認知症の興奮等に用いられることも）',
-       note:'【副作用】不眠、アカシジア（じっとできずそわそわする）、手のふるえ・こわばり、眠気\n【注意】自己判断で中止しない。少量から。高齢者は転倒・誤嚥に注意。',fileUrl:''},
+       note:'【副作用】不眠、アカシジア（じっとできずそわそわする）、手のふるえ・こわばり、眠気\n【注意】自己判断で中止しない。少量から。高齢者は転倒・誤嚥に注意。',fileUrl:PDF},
       {id:uid(),active:true,name:'アゾセミド（ダイアート）',dose:'30mg 1錠',timing:['朝'],start:'',end:'',stock:null,stockAlert:7,
        purpose:'うっ血性心不全によるむくみをとる（長時間型ループ利尿薬）',
-       note:'【副作用】脱水、低カリウム血症、こむら返り、めまい、頻尿\n【注意】水分・電解質に注意。朝に飲むと夜間の頻尿を避けやすい。',fileUrl:''},
+       note:'【副作用】脱水、低カリウム血症、こむら返り、めまい、頻尿\n【注意】水分・電解質に注意。朝に飲むと夜間の頻尿を避けやすい。',fileUrl:PDF},
       {id:uid(),active:true,name:'エンレスト（サクビトリルバルサルタン）',dose:'100mg 1錠',timing:['朝','夕'],start:'',end:'',stock:null,stockAlert:7,
        purpose:'慢性心不全の治療（ARNI：アンジオテンシン受容体ネプリライシン阻害薬）',
-       note:'【副作用】低血圧・めまい、高カリウム血症、腎機能の低下、咳\n【注意】ACE阻害薬とは併用しない（切り替え時は間隔をあける）。妊娠中は禁忌。脱水時は血圧低下に注意。',fileUrl:''},
+       note:'【副作用】低血圧・めまい、高カリウム血症、腎機能の低下、咳\n【注意】ACE阻害薬とは併用しない（切り替え時は間隔をあける）。妊娠中は禁忌。脱水時は血圧低下に注意。',fileUrl:PDF},
       {id:uid(),active:true,name:'酢酸亜鉛錠',dose:'25mg 1錠',timing:['朝','夕'],start:'',end:'',stock:null,stockAlert:7,
        purpose:'低亜鉛血症の治療（亜鉛の補充）',
-       note:'【副作用】銅欠乏（貧血・白血球減少）、吐き気・腹痛\n【注意】長期では銅・血液（血算）の値を確認。食後に飲むと胃症状が出にくい。',fileUrl:''}
+       note:'【副作用】銅欠乏（貧血・白血球減少）、吐き気・腹痛\n【注意】長期では銅・血液（血算）の値を確認。食後に飲むと胃症状が出にくい。',fileUrl:PDF}
     ],
     health:[], handoffs:[], files:[], care:[], log:[], intakeLog:{}
   };

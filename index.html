@@ -1213,6 +1213,21 @@ function importData(e){ const file=e.target.files[0]; if(!file)return; const r=n
   r.readAsText(file); }
 
 render();
+
+/* URLの # 以降に入れたデータを取り込む（サーバーには送られない）。#import=gzip+base64url */
+(async function(){
+  try{
+    const m=location.hash.match(/^#import=(.+)$/); if(!m)return;
+    const b=m[1].replace(/-/g,'+').replace(/_/g,'/'); const bin=atob(b+'==='.slice((b.length+3)%4));
+    const u8=Uint8Array.from(bin,c=>c.charCodeAt(0));
+    const txt=await new Response(new Blob([u8]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+    const d=migrate(JSON.parse(txt)); let add=0;
+    d.patients.forEach(p=>{ if(!db.patients.some(x=>x.name===p.name)){ db.patients.push({...p,id:uid()}); add++; } });
+    history.replaceState(null,'',location.pathname+location.search);
+    if(add){ currentId=null; view='chart'; save(); render(); }
+    alert(add?('✅ '+add+'人を追加しました'):'すでに登録済みです（追加なし）');
+  }catch(e){ alert('データを読み込めませんでした。URLが途中で切れていないか確認してください。'); }
+})();
 </script>
 </body>
 </html>

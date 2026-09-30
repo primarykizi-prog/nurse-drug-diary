@@ -964,7 +964,7 @@ function renderMore(c){
     <div class="lrow" onclick="openTeamModal()"><div class="ic pink">👥</div><div class="grow"><div class="t1">チームメンバー</div><div class="t2">ホームのアバターに表示</div></div><span style="color:var(--sub)">›</span></div>
     <div class="lrow" onclick="setView('notify')"><div class="ic amber">🔔</div><div class="grow"><div class="t1">お知らせ</div><div class="t2">残薬・受診・要確認のまとめ</div></div><span style="color:var(--sub)">›</span></div>
     <div class="lrow" onclick="openBackup()"><div class="ic blue">⤓</div><div class="grow"><div class="t1">バックアップ・共有</div><div class="t2">書き出し／追加・上書き読み込み</div></div><span style="color:var(--sub)">›</span></div>
-    <div class="lrow" onclick="addSampleYoshihara()"><div class="ic amber">🧪</div><div class="grow"><div class="t1">サンプル：吉原美智子さんを入れる</div><div class="t2">お薬5種（メマンチン/アリピプラゾール/アゾセミド/エンレスト/酢酸亜鉛）</div></div><span style="color:var(--sub)">›</span></div>
+    <div class="lrow" onclick="addSampleSample()"><div class="ic amber">🧪</div><div class="grow"><div class="t1">サンプル：山田花子さんを入れる</div><div class="t2">お薬5種（メマンチン/アリピプラゾール/アゾセミド/エンレスト/酢酸亜鉛）</div></div><span style="color:var(--sub)">›</span></div>
     <div class="card" style="margin-top:8px">
       <div class="chead"><div class="ic amber">🛟</div><div class="ct">このアプリについて</div></div>
       <p class="muted">データはこの端末の中だけに保存され、外部には送信されません。看護チーム内だけで共有され、患者様のプライバシーは外部に公開されません。
@@ -1155,14 +1155,14 @@ function saveCustomDrug(id){ const n=val('cd_n'); if(!n){alert('名前を入れ�
 function delCustomDrug(id){ if(!confirm('このマイ薬を削除しますか？'))return;
   db.customDrugs=(db.customDrugs||[]).filter(x=>x.id!==id); save(); closeModal(); openDrugSearch(); }
 
-/* サンプル投入：吉原美智子さん */
-function addSampleYoshihara(){
-  if(db.patients.some(p=>p.name==='吉原美智子')){
-    if(!confirm('「吉原美智子」さんは既に登録されています。\nもう1人追加しますか？\n（同じ薬を持つ別IDの利用者が増えます。重複が嫌なら「キャンセル」）'))return;
+/* サンプル投入：山田花子さん */
+function addSampleSample(){
+  if(db.patients.some(p=>p.name==='山田花子')){
+    if(!confirm('「山田花子」さんは既に登録されています。\nもう1人追加しますか？\n（同じ薬を持つ別IDの利用者が増えます。重複が嫌なら「キャンセル」）'))return;
   }
-  const PDF='samples/yoshihara_okusuri_sample.pdf';
+  const PDF='samples/sample_okusuri.pdf';
   const np={
-    id:uid(), name:'吉原美智子', kana:'よしはら みちこ',
+    id:uid(), name:'山田花子', kana:'やまだ はなこ',
     facilities:['頚城'],
     info:'90歳 / アルツハイマー型認知症・慢性心不全',
     nextVisit:'', nextVisitNote:'', summary:'',
@@ -1186,7 +1186,7 @@ function addSampleYoshihara(){
     health:[], handoffs:[], files:[], care:[], log:[], intakeLog:{}
   };
   db.patients.push(np); currentId=np.id; save(); currentTab='med'; view='chart'; render();
-  alert('✅ 吉原美智子さん（お薬5種）を追加しました。');
+  alert('✅ 山田花子さん（お薬5種）を追加しました。');
 }
 
 /* バックアップ */
